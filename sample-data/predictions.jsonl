@@ -1,0 +1,5 @@
+{"sample_id":"img-101","source_uri":"s3://ml-lab/review/img-101.jpg","labels":["cat","dog","car"],"probabilities":[0.36,0.34,0.30]}
+{"sample_id":"img-102","source_uri":"s3://ml-lab/review/img-102.jpg","labels":["cat","dog","car"],"probabilities":[0.90,0.06,0.04]}
+{"sample_id":"img-103","source_uri":"s3://ml-lab/review/img-103.jpg","labels":["cat","dog","car"],"probabilities":[0.40,0.39,0.21]}
+{"sample_id":"img-104","source_uri":"s3://ml-lab/review/img-104.jpg","labels":["cat","dog","car"],"probabilities":[0.55,0.23,0.22]}
+{"sample_id":"img-105","source_uri":"s3://ml-lab/review/img-105.jpg","labels":["cat","dog","car"],"probabilities":[0.34,0.33,0.33]}

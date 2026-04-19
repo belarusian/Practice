@@ -1,0 +1,6 @@
+{"id":"img-001","embedding":[0.95,0.05,0.02],"metadata":{"label":"cat","source_uri":"s3://ml-lab/demo/img-001.jpg"}}
+{"id":"img-002","embedding":[0.91,0.08,0.01],"metadata":{"label":"cat","source_uri":"s3://ml-lab/demo/img-002.jpg"}}
+{"id":"img-003","embedding":[0.10,0.92,0.03],"metadata":{"label":"dog","source_uri":"s3://ml-lab/demo/img-003.jpg"}}
+{"id":"img-004","embedding":[0.06,0.11,0.97],"metadata":{"label":"car","source_uri":"s3://ml-lab/demo/img-004.jpg"}}
+{"id":"img-005","embedding":[0.13,0.84,0.15],"metadata":{"label":"dog","source_uri":"s3://ml-lab/demo/img-005.jpg"}}
+

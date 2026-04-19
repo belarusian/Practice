@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "industry-ml-lab"
+version = "0.1.0"
+description = "A low-cost practice bed for training and deploying production-style ML systems."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+  { name = "OpenAI Codex" }
+]
+dependencies = [
+  "fastapi>=0.115.12",
+  "pillow>=11.2.1",
+  "pydantic>=2.11.4",
+  "psycopg[binary]>=3.2.7",
+  "pgvector>=0.3.6",
+  "python-dotenv>=1.1.0",
+  "structlog>=25.3.0",
+  "temporalio>=1.11.1",
+  "torch>=2.7.0",
+  "torchaudio>=2.7.0",
+  "torchvision>=0.22.0",
+  "uvicorn[standard]>=0.34.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.5",
+  "ruff>=0.11.8",
+]
+
+[project.scripts]
+ml-lab = "industry_ml_lab.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/industry_ml_lab"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
