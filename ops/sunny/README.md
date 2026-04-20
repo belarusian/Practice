@@ -51,11 +51,23 @@ These scripts turn the current Sunny demo stack into repo-backed operational sta
   - Runs from another machine such as this laptop.
   - Syncs the repo to Sunny, executes the smoke train there, and pulls the report back locally.
 
+- `audio-smoke.sh`
+  - Runs from Sunny WSL2.
+  - Same orchestration as `vision-smoke.sh`, but invokes Windows **`audio`** check and `train-audio` (SpeechCommands under `data/audio/`).
+
+- `audio-smoke.ps1`
+  - Runs on Windows through the WSL2 wrapper.
+  - `ml-lab check --target audio`, then one-epoch audio training via the same probe pattern as vision.
+
+- `run-remote-audio-smoke.sh`
+  - Runs from another machine such as this laptop.
+  - Syncs the repo to Sunny, runs `audio-smoke.sh`, pulls the report back locally.
+
 ## Remote wrappers and exit codes
 
-`run-remote-training-proof.sh` and `run-remote-vision-smoke.sh` use **`set -o pipefail`** so a failed remote `ssh` session is not masked by `tee`.
+`run-remote-training-proof.sh`, `run-remote-vision-smoke.sh`, and `run-remote-audio-smoke.sh` use **`set -o pipefail`** so a failed remote `ssh` session is not masked by `tee`.
 
-After rsync pulls `artifacts/sunny-reports/<stamp>/`, they run **`exit_from_summary_json.py`** on **`summary.json`**. The process exits **0** only when both the **SSH** step and **`all_commands_succeeded`** in the report are good—suitable for **CI** or **`make sunny-proof` / `make sunny-vision-smoke`** as hard gates.
+After rsync pulls `artifacts/sunny-reports/<stamp>/`, they run **`exit_from_summary_json.py`** on **`summary.json`**. The process exits **0** only when both the **SSH** step and **`all_commands_succeeded`** in the report are good—suitable for **CI** or **`make sunny-proof` / `make sunny-vision-smoke` / `make sunny-audio-smoke`** as hard gates.
 
 ## Training target: `vision` vs `audio`
 
@@ -99,6 +111,7 @@ bash ops/sunny/training-mode.sh
 bash ops/sunny/training-mode.sh --restore-demo
 bash ops/sunny/prove-training-runtime.sh --with-training-mode --restore-demo
 bash ops/sunny/vision-smoke.sh
+bash ops/sunny/audio-smoke.sh
 ```
 
 From another machine:
@@ -107,6 +120,7 @@ From another machine:
 bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo
 bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo --target audio
 bash ops/sunny/run-remote-vision-smoke.sh
+bash ops/sunny/run-remote-audio-smoke.sh
 ```
 
 If you want to run the Windows portion directly:
@@ -153,6 +167,11 @@ When **`audit-after-restore`** passes, `summarize_report_status.py` sets **`all_
 ## Why The Proof Scripts Exist
 
 Local tests on a laptop are still useful for pure-Python logic and CLI regressions, but they do not prove Sunny's real training runtime.
+
+Likewise, running `pytest` inside Sunny WSL2 is not the authoritative answer for CUDA training readiness. The authoritative checks are the report-producing Sunny flows:
+
+- `run-remote-training-proof.sh` / `prove-training-runtime.sh`
+- `run-remote-vision-smoke.sh` / `vision-smoke.sh`
 
 The proof scripts exist to answer, from the actual host:
 
