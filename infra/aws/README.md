@@ -1,5 +1,16 @@
 # AWS Deployment Notes
 
+The repo includes runnable scripts under `infra/aws/scripts` to make this topology concrete instead of doc-only:
+
+- `bootstrap.sh`: create or verify the S3 bucket and ECR repository
+- `create-budget.sh`: create a monthly AWS Budget with alert emails
+- `build-and-push-api.sh`: build the FastAPI image from `Dockerfile.api` and push it to ECR
+- `launch-spot-trainer.sh`: package the repo, upload a source bundle to S3, and launch an EC2 Spot GPU trainer
+- `upload-artifacts.sh`: sync local `artifacts/` to S3
+- `launch-api-instance.sh`: launch a CPU EC2 instance that pulls the API image and model artifact
+
+Copy `infra/aws/lab.env.example` to `infra/aws/lab.env` before using them.
+
 ## Recommended Lab Topology
 
 Use the smallest topology that still teaches the important lessons:
@@ -64,6 +75,18 @@ The rule is not that public subnets are always best. The rule is that early-stag
 5. Launch or update the CPU API instance.
 6. Point `ML_LAB_MODEL_PATH` at the promoted checkpoint.
 
+The script equivalents are:
+
+```bash
+cp infra/aws/lab.env.example infra/aws/lab.env
+make aws-bootstrap
+make aws-budget
+make aws-launch-trainer
+make aws-upload-artifacts
+make aws-build-and-push-api
+make aws-launch-api
+```
+
 ## Guardrails
 
 1. Add an AWS Budget before doing repeated experiments.
@@ -71,6 +94,8 @@ The rule is not that public subnets are always best. The rule is that early-stag
 3. Stop persistent CPU instances when not in use.
 4. Delete idle EBS volumes.
 5. Keep the GPU instance ephemeral by default.
+6. Use the provided lifecycle policy to keep the ECR repository from accumulating stale images.
+7. Prefer an IAM instance profile for EC2 access to S3 and ECR instead of long-lived credentials.
 
 ## What To Build Next
 
@@ -80,4 +105,3 @@ Once the base loop is working:
 - add a systemd service or container supervisor on the CPU box
 - add CI to build and push the API image
 - add a NestJS control-plane service if you want direct practice with the wider target stack
-

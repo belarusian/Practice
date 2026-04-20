@@ -1,8 +1,11 @@
 PYTHON := uv run
 
-.PHONY: sync lint format train-vision train-audio serve build-index search-index active-learning-report
+.PHONY: sync sync-lite lint format test check training-mode sunny-proof sunny-vision-smoke train-vision train-audio serve build-index search-index active-learning-report aws-bootstrap aws-budget aws-upload-artifacts aws-launch-trainer aws-build-and-push-api aws-launch-api
 
 sync:
+	uv sync --extra dev --extra serving --extra training --extra vector --extra workflow
+
+sync-lite:
 	uv sync --extra dev
 
 lint:
@@ -10,6 +13,21 @@ lint:
 
 format:
 	$(PYTHON) ruff format .
+
+test:
+	$(PYTHON) pytest
+
+check:
+	$(PYTHON) ml-lab check --verbose
+
+training-mode:
+	$(PYTHON) ml-lab check --target vision --verbose --json | python -c "import sys,json; d=json.load(sys.stdin); sys.exit(0 if d['is_ready'] else 1)"
+
+sunny-proof:
+	bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo
+
+sunny-vision-smoke:
+	bash ops/sunny/run-remote-vision-smoke.sh
 
 train-vision:
 	$(PYTHON) ml-lab train-vision --epochs 1 --output-dir artifacts/vision-baseline
@@ -29,3 +47,20 @@ search-index:
 active-learning-report:
 	$(PYTHON) ml-lab active-learning-report --predictions sample-data/predictions.jsonl --output artifacts/relabel-queue.csv
 
+aws-bootstrap:
+	./infra/aws/scripts/bootstrap.sh
+
+aws-budget:
+	./infra/aws/scripts/create-budget.sh
+
+aws-upload-artifacts:
+	./infra/aws/scripts/upload-artifacts.sh
+
+aws-launch-trainer:
+	./infra/aws/scripts/launch-spot-trainer.sh
+
+aws-build-and-push-api:
+	./infra/aws/scripts/build-and-push-api.sh
+
+aws-launch-api:
+	./infra/aws/scripts/launch-api-instance.sh

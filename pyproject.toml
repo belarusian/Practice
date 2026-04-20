@@ -12,24 +12,32 @@ authors = [
   { name = "OpenAI Codex" }
 ]
 dependencies = [
-  "fastapi>=0.115.12",
-  "pillow>=11.2.1",
   "pydantic>=2.11.4",
-  "psycopg[binary]>=3.2.7",
-  "pgvector>=0.3.6",
-  "python-dotenv>=1.1.0",
-  "structlog>=25.3.0",
-  "temporalio>=1.11.1",
-  "torch>=2.7.0",
-  "torchaudio>=2.7.0",
-  "torchvision>=0.22.0",
-  "uvicorn[standard]>=0.34.2",
 ]
 
 [project.optional-dependencies]
 dev = [
   "pytest>=8.3.5",
   "ruff>=0.11.8",
+]
+serving = [
+  "fastapi>=0.115.12",
+  "pillow>=11.2.1",
+  "torch>=2.7.0",
+  "torchvision>=0.22.0",
+  "uvicorn[standard]>=0.34.2",
+]
+training = [
+  "torch>=2.7.0",
+  "torchaudio>=2.7.0",
+  "torchvision>=0.22.0",
+]
+vector = [
+  "pgvector>=0.3.6",
+  "psycopg[binary]>=3.2.7",
+]
+workflow = [
+  "temporalio>=1.11.1",
 ]
 
 [project.scripts]

@@ -64,6 +64,17 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     worker_parser.add_argument("--task-queue", type=str, default=None)
 
+    check_parser = subparsers.add_parser(
+        "check",
+        help="Check training environment prerequisites.",
+    )
+    check_parser.add_argument("--target", choices=("vision", "audio"), default="vision")
+    check_parser.add_argument("--device", choices=("cpu", "cuda", "mps"), default=None)
+    check_parser.add_argument("--output-dir", type=Path, default=None, help="Output directory for artifacts")
+    check_parser.add_argument("--dataset-root", type=Path, default=None, help="Dataset root directory")
+    check_parser.add_argument("--verbose", action="store_true", help="Show details for all checks")
+    check_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
     return parser
 
 
@@ -142,9 +153,37 @@ def main(argv: list[str] | None = None) -> None:
         run_worker(task_queue=args.task_queue)
         return
 
+    if args.command == "check":
+        from industry_ml_lab.training.checklist import run_training_checklist, format_checklist
+
+        checklist = run_training_checklist(
+            target=args.target,
+            device=args.device,
+            output_dir=args.output_dir,
+            dataset_root=args.dataset_root,
+        )
+
+        if args.json:
+            output = json.dumps({
+                "target": checklist.target,
+                "resolved_device": checklist.resolved_device,
+                "is_ready": checklist.is_ready,
+                "has_warnings": checklist.has_warnings,
+                "checks": [
+                    {"name": c.name, "status": c.status, "message": c.message, "details": c.details}
+                    for c in checklist.checks
+                ],
+            }, indent=2)
+            print(output)
+        else:
+            print(format_checklist(checklist, verbose=args.verbose))
+
+        if not checklist.is_ready:
+            raise SystemExit(1)
+        return
+
     raise SystemExit(f"Unknown command: {args.command}")
 
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-

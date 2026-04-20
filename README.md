@@ -30,13 +30,41 @@ This is not optimized for maximum abstraction. It is optimized for learning the 
 ## Quick Start
 
 ```bash
-uv sync
+# Check vision-training readiness before training
+uv run ml-lab check --target vision --verbose
+
+# Build a local embedding index
 uv run ml-lab build-index --records sample-data/embedding-records.jsonl --output artifacts/demo-index.json
+
+# Search the index
 uv run ml-lab search-index --index-path artifacts/demo-index.json --vector 0.92,0.08,0.04
+
+# Generate an active learning relabel queue
 uv run ml-lab active-learning-report --predictions sample-data/predictions.jsonl --output artifacts/relabel-queue.csv
+
+# Train vision model (device automatically selected: cuda/mps/cpu)
+uv run ml-lab train-vision --output-dir artifacts/vision-baseline
 ```
 
-If you want the full API or model training flows, install the project dependencies first with `uv sync`, then use the commands in the `Makefile`.
+If you want the full API, workflow, vector, and model training flows, run `make sync` to install the full stack.
+
+## Dependency Profiles
+
+The repo is split into extras so the runtime can stay smaller:
+
+- `dev`: linting and tests
+- `serving`: FastAPI, vision inference, and API runtime
+- `training`: PyTorch, torchvision, and torchaudio for training jobs
+- `vector`: Postgres and `pgvector` clients
+- `workflow`: Temporal client and worker runtime
+
+Examples:
+
+```bash
+uv sync --extra dev
+uv sync --extra serving --extra training
+make sync
+```
 
 ## Practice Tracks
 
@@ -61,6 +89,8 @@ Push model and API artifacts to AWS with a cost-aware topology.
 ## Recommended Learning Path
 
 - Phase 1: Get the local CLI and demo data working
+  - Run `make check` or `uv run ml-lab check --target vision --verbose`
+  - Use the checklist to verify target-specific training deps and current device readiness
 - Phase 2: Train the vision model, then wire the API to a real checkpoint
 - Phase 3: Add the audio baseline and uncertainty-driven relabel loop
 - Phase 4: Replace the local retrieval index with Postgres plus `pgvector`
@@ -72,5 +102,52 @@ Push model and API artifacts to AWS with a cost-aware topology.
 - [Architecture](docs/architecture.md)
 - [AWS Costs](docs/aws-costs.md)
 - [Roadmap](docs/roadmap.md)
+- [Training Checklist](docs/checklist.md)
+- [Checklist Quick Reference](docs/checklist-quickref.md)
+- [Current State](docs/current-state.md)
+- [Sunny Operator Runbook](docs/sunny-operator-runbook.md)
+- [Handoff Guide](docs/handoff-guide.md)
+- [Demo Stack](docs/demo-stack.md)
+- [Operating Model](docs/operating-model.md)
 - [AWS Deployment Notes](infra/aws/README.md)
+- [Sunny Ops](ops/sunny/README.md)
 
+## Machine Split
+
+- Sunny: CUDA training box and live demo host
+- Mac Studio: large-memory local inference box
+- AWS: thin public edge plus selective rehearsal environment
+
+On Sunny, use:
+
+- `bash ops/sunny/reinit-demo-stack.sh` for demo mode
+- `bash ops/sunny/training-mode.sh --dry-run` to inspect what training mode would stop
+- `bash ops/sunny/training-mode.sh` to free the 4090 for training
+- `bash ops/sunny/training-mode.sh --restore-demo` to bring the demo GPU services back
+- `bash ops/sunny/prove-training-runtime.sh --with-training-mode --restore-demo` to produce a host-local report of WSL and Windows training readiness
+- `bash ops/sunny/vision-smoke.sh` to run the repo-owned Windows vision smoke training flow from Sunny WSL2
+
+This mode split has already been validated on Sunny: the live demo stack used about `23.7 GiB` to `23.9 GiB` of 4090 VRAM, `training-mode.sh` reduced that to about `1.1 GiB` used with `23.5 GiB` free, and restore returned the demo services to healthy status.
+
+From a separate machine, use `bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo` to sync the repo to Sunny, run the proof there, and pull the report back under `artifacts/sunny-reports/`.
+
+For the current repo-owned Windows training smoke loop from another machine, use `bash ops/sunny/run-remote-vision-smoke.sh`.
+
+Current proven state on Sunny:
+
+- WSL2 is healthy for services and ops, but not yet training-ready
+- Windows Python `3.11` is the currently proven CUDA training path for this repo
+
+## AWS Workflow
+
+The repo now includes a concrete AWS bootstrap path:
+
+1. Copy `infra/aws/lab.env.example` to `infra/aws/lab.env` and fill in your subnet, security group, and notification email.
+2. Run `make aws-bootstrap` to create the S3 bucket and ECR repository.
+3. Run `make aws-budget` to put a monthly budget and alert threshold in place.
+4. Run `make aws-launch-trainer` to start an ephemeral Spot GPU trainer.
+5. Run `make aws-upload-artifacts` after local or remote training to sync artifacts to S3.
+6. Run `make aws-build-and-push-api` to publish the API container to ECR.
+7. Run `make aws-launch-api` to launch a CPU EC2 instance that pulls the container and serves the model.
+
+The AWS scripts live under [infra/aws/scripts](/Users/av4nda/Practice/infra/aws/scripts:1) and assume `us-east-1` by default.
