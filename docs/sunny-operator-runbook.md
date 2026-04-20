@@ -156,6 +156,33 @@ Look at these first:
 - `wsl-ml-lab-check.txt`
 - `run.log`
 
+## Regression Tests Vs Runtime Proof
+
+Do not confuse repo regression tests with Sunny runtime validation.
+
+Use `pytest` or `make test` for:
+
+- pure-Python regression coverage
+- CLI behavior that does not depend on the real Sunny Windows CUDA runtime
+- general repo sanity on a development machine
+
+Do **not** use `pytest` on Sunny WSL2 as the authoritative answer to "can Sunny train right now?"
+
+For Sunny host validation, use:
+
+- `make sunny-proof` to prove the real remote runtime and pull back a report
+- `make sunny-vision-smoke` to run the repo-owned Windows CUDA vision smoke train
+
+If you are already logged into Sunny WSL2, the direct host-side commands are:
+
+```bash
+cd /home/sasha/Practice
+bash ops/sunny/prove-training-runtime.sh --with-training-mode --restore-demo
+bash ops/sunny/vision-smoke.sh
+```
+
+Today, the authoritative training signal is the Windows `py -3.11` path inside those reports, not `pytest` in WSL2.
+
 ## Running The Proven Windows Path
 
 The current proven training runtime is Windows Python `3.11`.
@@ -195,18 +222,19 @@ py -3.11 -m industry_ml_lab.cli check --target vision --device cuda --output-dir
 
 Be precise here:
 
-- there is **not yet** a single repo-owned Windows training smoke script
-- there is **not yet** a standardized Windows environment bootstrap documented as fully proven
-- what is proven is the repo-based `vision` readiness path on Windows Python `3.11`
+- the repo-owned Windows `vision` smoke path is now proven
+- the authoritative Sunny training path is Windows Python `3.11` plus CUDA
+- Sunny WSL2 remains the control and ops layer, not the proven training runtime
+- there is still **not yet** a standardized Windows environment bootstrap documented as fully generic beyond the current proven path
 
 So when someone asks “how do I build on Sunny?”, the honest answer today is:
 
 - sync the repo
 - use Windows Python `3.11`
 - run the repo via `PYTHONPATH` from the Windows view of the WSL checkout
-- prove readiness first
+- use `make sunny-proof` and `make sunny-vision-smoke` as the operator checks
 
-Do **not** tell people that WSL `uv sync` is the active training path. That is false today.
+Do **not** tell people that WSL `uv sync`, `pytest`, or `make test` are the active training proof path. That is false today.
 
 ## Known-Good Vision Readiness Command
 
@@ -224,22 +252,30 @@ Expected result:
 - CUDA device: `NVIDIA GeForce RTX 4090`
 - free VRAM around `22.4 GB` when in training mode
 
-## Next Unproven Command
+## Proven Vision Smoke Path
 
-The next thing the new operator should add and prove is a real Windows vision smoke train.
+The repo-owned Windows vision smoke train is now proven on Sunny.
 
-The intended next command shape is:
+Preferred from another machine:
 
-```powershell
-Set-Location '\\wsl.localhost\Ubuntu\home\sasha\Practice'
-$env:PYTHONPATH = '\\wsl.localhost\Ubuntu\home\sasha\Practice\src'
-py -3.11 -m industry_ml_lab.cli train-vision --epochs 1 --device cuda --output-dir artifacts/vision-smoke
+```bash
+cd /path/to/Practice
+make sunny-vision-smoke
 ```
 
-Important:
+Directly from Sunny WSL2:
 
-- this is the **next proof target**
-- do not describe it as already proven until the repo contains the log and resulting artifact
+```bash
+cd /home/sasha/Practice
+bash ops/sunny/vision-smoke.sh
+```
+
+Expected result:
+
+- one epoch of CIFAR-10 training completes on the 4090
+- the report directory contains `vision-artifacts/metrics.json` and `vision-artifacts/model.pt`
+- `summary.json` reports overall success
+- `restore-demo` may hit a wall-clock timeout, but the run is still treated as successful when `audit-after-restore` passes
 
 ## Audio Caveat
 
