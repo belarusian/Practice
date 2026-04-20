@@ -79,6 +79,15 @@ def _evaluate(model, loader, criterion, device: str) -> tuple[float, float]:
 
 
 def train(config: VisionTrainConfig) -> dict[str, object]:
+    from industry_ml_lab.training.checklist import assert_training_ready
+
+    assert_training_ready(
+        target="vision",
+        device=config.device,
+        output_dir=config.output_dir,
+        dataset_root=config.dataset_root,
+    )
+
     import torch
     from torch import nn
     from torch.optim import AdamW
@@ -189,4 +198,3 @@ def train(config: VisionTrainConfig) -> dict[str, object]:
         },
     )
     return summary
-

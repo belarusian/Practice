@@ -5,6 +5,7 @@ __pycache__/
 .mypy_cache/
 artifacts/
 data/
+infra/aws/lab.env
 *.pyc
 *.pyo
 *.pyd

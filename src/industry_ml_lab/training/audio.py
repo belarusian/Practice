@@ -127,6 +127,15 @@ def _evaluate(model, loader, criterion, device: str) -> tuple[float, float]:
 
 
 def train(config: AudioTrainConfig) -> dict[str, object]:
+    from industry_ml_lab.training.checklist import assert_training_ready
+
+    assert_training_ready(
+        target="audio",
+        device=config.device,
+        output_dir=config.output_dir,
+        dataset_root=config.dataset_root,
+    )
+
     from torch import nn
     from torch.optim import AdamW
     from torch.optim.lr_scheduler import CosineAnnealingLR
@@ -210,4 +219,3 @@ def train(config: AudioTrainConfig) -> dict[str, object]:
         },
     )
     return summary
-
