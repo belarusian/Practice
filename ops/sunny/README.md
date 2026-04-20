@@ -57,6 +57,32 @@ These scripts turn the current Sunny demo stack into repo-backed operational sta
 
 After rsync pulls `artifacts/sunny-reports/<stamp>/`, they run **`exit_from_summary_json.py`** on **`summary.json`**. The process exits **0** only when both the **SSH** step and **`all_commands_succeeded`** in the report are good—suitable for **CI** or **`make sunny-proof` / `make sunny-vision-smoke`** as hard gates.
 
+## Training target: `vision` vs `audio`
+
+`prove-training-runtime.sh` and `run-remote-training-proof.sh` accept **`--target vision`** (default) or **`--target audio`**. The Windows path runs `ml-lab check --target …` so **`torchaudio`** is required for **`audio`** to go green.
+
+Before adding audio smoke, prove the Windows runtime on Sunny (PowerShell on the box or via WSL):
+
+```powershell
+Set-Location '\\wsl.localhost\Ubuntu\home\sasha\Practice'
+$env:PYTHONPATH = '\\wsl.localhost\Ubuntu\home\sasha\Practice\src'
+py -3.11 -c "import importlib.util, json, torch; print(json.dumps({'torch': True, 'torchaudio': importlib.util.find_spec('torchaudio') is not None, 'cuda_available': torch.cuda.is_available()}, indent=2))"
+```
+
+From a laptop, after **`torchaudio`** is confirmed on Sunny Windows:
+
+```bash
+make sunny-proof-audio
+```
+
+Equivalent:
+
+```bash
+bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo --target audio
+```
+
+Proof-mode summary (**`--proof`**) still treats expected WSL red as non-gating; the Windows **`ml-lab check`** line is what must pass for **`audio`**.
+
 ## Usage
 
 Operator login and day-to-day access details now live in:
@@ -79,6 +105,7 @@ From another machine:
 
 ```bash
 bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo
+bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo --target audio
 bash ops/sunny/run-remote-vision-smoke.sh
 ```
 

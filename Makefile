@@ -1,6 +1,6 @@
 PYTHON := uv run
 
-.PHONY: sync sync-lite lint format test check training-mode sunny-proof sunny-vision-smoke train-vision train-audio serve build-index search-index active-learning-report aws-bootstrap aws-budget aws-upload-artifacts aws-launch-trainer aws-build-and-push-api aws-launch-api
+.PHONY: sync sync-lite lint format test check training-mode sunny-proof sunny-proof-audio sunny-vision-smoke train-vision train-audio serve build-index search-index active-learning-report aws-bootstrap aws-budget aws-upload-artifacts aws-launch-trainer aws-build-and-push-api aws-launch-api
 
 sync:
 	uv sync --extra dev --extra serving --extra training --extra vector --extra workflow
@@ -25,6 +25,9 @@ training-mode:
 
 sunny-proof:
 	bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo
+
+sunny-proof-audio:
+	bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo --target audio
 
 sunny-vision-smoke:
 	bash ops/sunny/run-remote-vision-smoke.sh
