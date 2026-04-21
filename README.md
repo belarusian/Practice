@@ -1,10 +1,10 @@
 # Industry ML Lab
 
-This repository is a low-cost training bed for practicing the work behind production ML systems, not just model demos. It is designed to help you build muscle in PyTorch training, experiment management, active learning, embedding retrieval, model serving, and AWS deployment without immediately committing to a large managed-services bill.
+This repository is a low-cost training bed for practicing the work behind production ML systems, not just model demos. It is designed to build hands-on experience with PyTorch training, experiment management, active learning, embedding retrieval, model serving, and AWS deployment without immediately committing to a large managed-services bill.
 
 ## What This Covers
 
-The lab is structured to map directly onto the capability profile you described:
+The lab is structured around production-oriented ML capabilities:
 
 - Image classification and computer vision with PyTorch
 - Audio classification to build voice and audio intuition
@@ -50,7 +50,7 @@ uv run ml-lab train-vision --output-dir artifacts/vision-baseline
 uv run ml-lab train-text-classifier --output-dir artifacts/text-baseline --train-sample-limit 512 --val-sample-limit 128
 ```
 
-If you want the full API, workflow, vector, and model training flows, run `make sync` to install the full stack.
+To install the full API, workflow, vector, and model training stack, run `make sync`.
 
 ## Dependency Profiles
 
@@ -105,7 +105,7 @@ Push model and API artifacts to AWS with a cost-aware topology.
 - Phase 4: Add transformer text classification, then connect embeddings to retrieval
 - Phase 5: Replace the local retrieval index with Postgres plus `pgvector`
 - Phase 6: Containerize and deploy to AWS EC2 and S3
-- Phase 7: Add a control plane in TypeScript or NestJS if you want direct exposure to the rest of the target stack
+- Phase 7: Add a control plane in TypeScript or NestJS for full-stack model operations practice
 
 ## Key Documents
 
