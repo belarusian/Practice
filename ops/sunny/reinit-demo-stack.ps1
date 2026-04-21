@@ -15,6 +15,44 @@ $LogRoot = Join-Path $env:USERPROFILE "demo-stack-logs"
 $NvidiaSmi = Join-Path $env:WINDIR "System32\nvidia-smi.exe"
 New-Item -ItemType Directory -Path $LogRoot -Force | Out-Null
 
+function Import-LabEnvFile {
+    param([string]$Path)
+
+    if (-not (Test-Path $Path)) {
+        return
+    }
+
+    foreach ($line in Get-Content -Path $Path) {
+        $trimmed = $line.Trim()
+        if ([string]::IsNullOrWhiteSpace($trimmed) -or $trimmed.StartsWith("#")) {
+            continue
+        }
+
+        $separator = $trimmed.IndexOf("=")
+        if ($separator -le 0) {
+            continue
+        }
+
+        $name = $trimmed.Substring(0, $separator).Trim()
+        $value = $trimmed.Substring($separator + 1).Trim()
+
+        if (-not ($name -match "^[A-Za-z_][A-Za-z0-9_]*$")) {
+            continue
+        }
+
+        if (
+            ($value.StartsWith("'") -and $value.EndsWith("'")) -or
+            ($value.StartsWith('"') -and $value.EndsWith('"'))
+        ) {
+            $value = $value.Substring(1, $value.Length - 2)
+        }
+
+        if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) {
+            [Environment]::SetEnvironmentVariable($name, $value, "Process")
+        }
+    }
+}
+
 function Get-LabEnv {
     param(
         [string]$Name,
@@ -26,6 +64,8 @@ function Get-LabEnv {
     }
     return $value
 }
+
+Import-LabEnvFile -Path (Join-Path $PSScriptRoot "lab.env")
 
 $LlamaRoot = Get-LabEnv -Name "SUNNY_LLAMA_ROOT" -Default "C:\ml-lab\llama.cpp"
 $ModelsRoot = Get-LabEnv -Name "SUNNY_MODELS_ROOT" -Default "C:\ml-lab\models"
