@@ -15,7 +15,7 @@ Use this document for day-to-day operation. Use [Handoff Guide](docs/handoff-gui
 ## What Is Proven Right Now
 
 - Sunny WSL2 is the control and ops layer
-- Sunny Windows Python `3.11` is the current proven CUDA training path for `vision`
+- Sunny Windows Python `3.11` is the current proven CUDA training path for both `vision` and bounded `audio` smoke runs
 - Sunny WSL2 is **not** currently training-ready
 
 Do not treat WSL2 as the active training runtime unless someone explicitly upgrades and re-proves it.
@@ -172,6 +172,7 @@ For Sunny host validation, use:
 
 - `make sunny-proof` to prove the real remote runtime and pull back a report
 - `make sunny-vision-smoke` to run the repo-owned Windows CUDA vision smoke train
+- `make sunny-audio-smoke` to run the repo-owned bounded Windows CUDA audio smoke train
 
 If you are already logged into Sunny WSL2, the direct host-side commands are:
 
@@ -179,6 +180,7 @@ If you are already logged into Sunny WSL2, the direct host-side commands are:
 cd /home/sasha/Practice
 bash ops/sunny/prove-training-runtime.sh --with-training-mode --restore-demo
 bash ops/sunny/vision-smoke.sh
+bash ops/sunny/audio-smoke.sh
 ```
 
 Today, the authoritative training signal is the Windows `py -3.11` path inside those reports, not `pytest` in WSL2.
@@ -232,7 +234,7 @@ So when someone asks “how do I build on Sunny?”, the honest answer today is:
 - sync the repo
 - use Windows Python `3.11`
 - run the repo via `PYTHONPATH` from the Windows view of the WSL checkout
-- use `make sunny-proof` and `make sunny-vision-smoke` as the operator checks
+- use `make sunny-proof`, `make sunny-vision-smoke`, and `make sunny-audio-smoke` as the operator checks
 
 Do **not** tell people that WSL `uv sync`, `pytest`, or `make test` are the active training proof path. That is false today.
 
@@ -277,18 +279,36 @@ Expected result:
 - `summary.json` reports overall success
 - `restore-demo` may hit a wall-clock timeout, but the run is still treated as successful when `audit-after-restore` passes
 
-## Audio Caveat
+## Proven Audio Smoke Path
 
-The current Windows proof showed:
+The repo-owned Windows audio smoke train is now proven on Sunny as a bounded smoke workload.
 
-- `torch: true`
-- `torchvision: true`
-- `torchaudio: false`
+Preferred from another machine:
 
-So:
+```bash
+cd /path/to/Practice
+make sunny-audio-smoke
+```
 
-- `vision` is the current proven path
-- `audio` still needs environment work and proof on Windows
+Directly from Sunny WSL2:
+
+```bash
+cd /home/sasha/Practice
+bash ops/sunny/audio-smoke.sh
+```
+
+Expected result:
+
+- one bounded SpeechCommands training pass completes on the 4090
+- the report directory contains `audio-artifacts/metrics.json` and `audio-artifacts/model.pt`
+- the nested Windows audio smoke summary is green
+- the dataset is staged to a Windows-local cache if the source path comes from `\\wsl.localhost\...`
+- `restore-demo` may still hit a wall-clock timeout, but the run is treated as successful when `audit-after-restore` passes
+
+Current smoke settings are intentionally bounded for operator speed, not benchmark realism:
+
+- `train_sample_limit = 1024`
+- `val_sample_limit = 256`
 
 ## What To Hand Back After Any Change
 

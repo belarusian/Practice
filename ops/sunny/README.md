@@ -58,6 +58,7 @@ These scripts turn the current Sunny demo stack into repo-backed operational sta
 - `audio-smoke.ps1`
   - Runs on Windows through the WSL2 wrapper.
   - `ml-lab check --target audio`, then one-epoch audio training via the same probe pattern as vision.
+  - If the dataset path is a **`\\wsl…` UNC** (typical when WSL passes `wslpath -w` for `data/audio`), the script **stages a copy under `%LOCALAPPDATA%\industry-ml-lab\audio-smoke-speech-commands`** so `torchaudio.load()` reads normal Windows paths, not the WSL redirector.
 
 - `run-remote-audio-smoke.sh`
   - Runs from another machine such as this laptop.
@@ -68,6 +69,8 @@ These scripts turn the current Sunny demo stack into repo-backed operational sta
 `run-remote-training-proof.sh`, `run-remote-vision-smoke.sh`, and `run-remote-audio-smoke.sh` use **`set -o pipefail`** so a failed remote `ssh` session is not masked by `tee`.
 
 After rsync pulls `artifacts/sunny-reports/<stamp>/`, they run **`exit_from_summary_json.py`** on **`summary.json`**. The process exits **0** only when both the **SSH** step and **`all_commands_succeeded`** in the report are good—suitable for **CI** or **`make sunny-proof` / `make sunny-vision-smoke` / `make sunny-audio-smoke`** as hard gates.
+
+`audio-smoke.ps1` and `vision-smoke.ps1` **`exit 1`** when any nested Windows step fails (not only when the script throws). **`summarize_report_status.py`** also forces overall failure if **`windows-*-smoke-summary.json`** in the report directory has **`all_commands_succeeded`: false**, so a stale green **`windows-*-smoke-console`** line cannot mask a red nested summary.
 
 ## Training target: `vision` vs `audio`
 

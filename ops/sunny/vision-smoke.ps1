@@ -112,6 +112,8 @@ function Save-NativeStep {
     if (Test-Path $stderrPath) {
         $stderr = Get-Content -Path $stderrPath -Raw
     }
+    if ($null -eq $stdout) { $stdout = "" }
+    if ($null -eq $stderr) { $stderr = "" }
 
     $combined = @(
         "COMMAND: $commandText"
@@ -199,3 +201,7 @@ $summary = [pscustomobject]@{
 }
 $summary | ConvertTo-Json -Depth 4 | Set-Content -Path $summaryPath -Encoding utf8
 $summary | ConvertTo-Json -Depth 4
+
+if (-not $summary.all_commands_succeeded) {
+    exit 1
+}

@@ -19,6 +19,25 @@ def _gate_entries(entries: list[dict], proof_mode: bool) -> list[dict]:
     return [e for e in entries if e["name"] != "wsl-ml-lab-check"]
 
 
+def _nested_windows_smoke_failure_note(report_dir: Path) -> str | None:
+    """If windows-*-smoke-summary.json exists and reports failure, return a note string."""
+    if not report_dir.is_dir():
+        return None
+    failed: list[str] = []
+    for path in sorted(report_dir.glob("windows-*-smoke-summary.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8-sig"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if data.get("all_commands_succeeded") is False:
+            failed.append(path.name)
+    if not failed:
+        return None
+    return (
+        "nested Windows smoke reports failure in: " + ", ".join(failed)
+    )
+
+
 def compute_all_succeeded(
     entries: list[dict], proof_mode: bool
 ) -> tuple[bool, str | None]:
@@ -69,11 +88,16 @@ def main() -> None:
         )
 
     all_ok, note = compute_all_succeeded(entries, proof_mode=proof_mode)
+    nested_note = _nested_windows_smoke_failure_note(summary_path.parent)
+    if nested_note is not None:
+        all_ok = False
     summary: dict = {
         "report_dir": str(summary_path.parent),
         "all_commands_succeeded": all_ok,
         "entries": entries,
     }
+    if nested_note is not None:
+        summary["nested_windows_smoke_note"] = nested_note
     if proof_mode:
         summary["proof_mode"] = True
         wsl = next((e for e in entries if e["name"] == "wsl-ml-lab-check"), None)
