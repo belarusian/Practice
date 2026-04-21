@@ -20,6 +20,7 @@ Verified locally:
 - CLI entrypoint `ml-lab`
 - vision training baseline
 - audio training baseline
+- transformer text-classification baseline
 - active-learning scoring and relabel queue generation
 - local embedding index and search
 - FastAPI serving layer
@@ -29,7 +30,7 @@ Verified locally:
 
 Validation performed:
 
-- `PYTHONPATH=src pytest -q`
+- `PYTHONPATH=src pytest -q` (`76 passed, 4 skipped` on this branch)
 - `python3 -m compileall src`
 - `python3 -m compileall tests`
 - `PYTHONPATH=src python3 -m industry_ml_lab --help`
@@ -40,6 +41,7 @@ Status:
 - repo codebase is syntactically healthy
 - most of the lightweight regression coverage passes on this machine
 - pure-Python and CLI surfaces are present
+- the transformer text-classification path is implemented locally but not yet runtime-proven on Sunny
 - heavyweight runtime paths are still only partially runtime-validated
 - local `pytest` results are useful regression signals, but they are not the authoritative Sunny runtime proof path
 
@@ -280,6 +282,28 @@ Interpretation:
 - WSL remains the ops and mode-switch layer; Windows remains the active trainer
 - audio smoke is now suitable as a rehearsal gate, not as a benchmark of full SpeechCommands training throughput
 
+### Transformer Text Classifier
+
+Implemented locally on branch `transformer-training-track`:
+
+- `ml-lab train-text-classifier` fine-tunes a Hugging Face sequence-classification model with a native PyTorch training loop
+- default task is GLUE/SST-2 using `distilbert/distilbert-base-uncased`
+- the `text` checklist target validates `torch`, `transformers`, and `datasets`
+- bounded sample limits are available for smoke-sized runs: `--train-sample-limit` and `--val-sample-limit`
+- artifacts are written as a Hugging Face `save_pretrained()` model directory plus `metrics.json` and `model_meta.json`
+
+Validation performed locally:
+
+- `PYTHONPATH=src pytest tests/test_checklist.py tests/test_cli.py -q` -> `70 passed`
+- `PYTHONPATH=src pytest -q` -> `76 passed, 4 skipped`
+- `python3 -m compileall src tests` -> passed
+
+Interpretation:
+
+- the transformer classifier is now wired into the repo's CLI, config, checklist, docs, and tests
+- it is not yet a proven Sunny training path
+- the next runtime proof should install the `transformer` extra on Sunny Windows Python `3.11`, then run a bounded text-classifier smoke through the same remote-report pattern used for vision and audio
+
 ## Processed View Of Coder 2 Report
 
 Coder 2's repository analysis is directionally correct and consistent with the codebase.
@@ -354,12 +378,13 @@ It is the remaining Sunny training-runtime decision:
 
 1. Re-validate direct LAN SSH access to Sunny after the elevated Windows port-forward refresh.
 2. Tighten the remaining restore-tail behavior in the remote smoke wrappers so the outer run finalizes as cleanly as the nested Windows report.
-3. Decide explicitly whether WSL2 should stay service-only or be upgraded later to Python `3.11` plus training deps.
-4. Treat each training session as a mode transition:
+3. Prove the new transformer text classifier on Sunny Windows Python `3.11` after installing the `transformer` extra.
+4. Decide explicitly whether WSL2 should stay service-only or be upgraded later to Python `3.11` plus training deps.
+5. Treat each training session as a mode transition:
    - `bash ops/sunny/training-mode.sh`
    - run training
    - `bash ops/sunny/training-mode.sh --restore-demo`
-5. Keep using `audit-demo-stack.sh` output and `artifacts/sunny-reports/*` proof reports as the source artifacts for doc updates about Sunny ports, health, and training readiness.
+6. Keep using `audit-demo-stack.sh` output and `artifacts/sunny-reports/*` proof reports as the source artifacts for doc updates about Sunny ports, health, and training readiness.
 
 ## State Summary
 
@@ -378,8 +403,10 @@ Verified:
 - Sunny Windows Python `3.11` is the currently proven CUDA training path
 - repo-owned vision smoke training (`make sunny-vision-smoke`) has completed end-to-end on Sunny with real metrics and `model.pt` artifacts (2026-04-20)
 - repo-owned bounded audio smoke training (`make sunny-audio-smoke`) has completed end-to-end on Sunny with real metrics and `model.pt` artifacts (2026-04-20)
+- transformer text-classification training is implemented locally and covered by CLI/checklist tests
 
 Not yet verified:
 
 - direct LAN SSH path to Sunny
 - full serving and workflow execution paths for the ML lab
+- transformer text-classifier training on Sunny Windows CUDA

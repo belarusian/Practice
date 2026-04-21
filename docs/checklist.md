@@ -19,6 +19,7 @@ uv run ml-lab check --target vision --json
 
 # Check specific target
 uv run ml-lab check --target audio --verbose
+uv run ml-lab check --target text --verbose
 
 # Force specific device (cpu, cuda, mps)
 uv run ml-lab check --target vision --device cuda --verbose
@@ -41,12 +42,14 @@ make training-mode
 - **Checks**: Python 3.11+ is installed
 - **Fix**: Install Python 3.11 or later
 
-### 2. Target Dependencies (vision/audio)
+### 2. Target Dependencies (vision/audio/text)
 - **Status**: `ok` | `error`
 - **Checks**: Required PyTorch packages installed
   - `vision`: `torch`, `torchvision`
   - `audio`: `torch`, `torchaudio`
+  - `text`: `torch`, `transformers`, `datasets`
 - **Fix**: `uv sync --extra training`
+  - For `text`: `uv sync --extra transformer`
 
 ### 3. Device Backend
 - **Status**: `ok` | `error`
@@ -192,6 +195,7 @@ STATUS: Not ready for vision training
 | `ml-lab check` | Manual | Verify environment |
 | `ml-lab train-vision` | Automatic | Fail fast if not ready |
 | `ml-lab train-audio` | Automatic | Fail fast if not ready |
+| `ml-lab train-text-classifier` | Automatic | Fail fast if transformer deps are not ready |
 | `ml-lab serve` | No | Serving doesn't need training checks |
 
 ## Guarantees
@@ -199,7 +203,7 @@ STATUS: Not ready for vision training
 The checklist guarantees:
 
 - ✅ No false "ready" on lite/dev environments (checks for required dependencies)
-- ✅ No false "ready" on Mac/CPU/MPS when training deps are missing (checks torch, torchvision/torchaudio)
+- ✅ No false "ready" on Mac/CPU/MPS when training deps are missing (checks torch, torchvision/torchaudio/transformers/datasets)
 - ✅ Sunny/CUDA readiness reflects real free VRAM, not only hardware presence (uses `torch.cuda.mem_get_info()`)
 - ✅ Training commands fail through checklist output before heavy training imports when required deps are missing
 
@@ -210,3 +214,14 @@ The checklist guarantees:
 3. **If GPU is busy**: Wait or kill demo services
 4. **CPU fallback**: Use `--device cpu` for non-GPU-critical work
 5. **CI/CD**: Use `make training-mode` or `ml-lab check --json` with exit code
+
+## Transformer Text Classifier
+
+The `text` target is the first transformer training path. It checks the Hugging Face `transformers` and `datasets` packages in addition to PyTorch.
+
+```bash
+uv run ml-lab check --target text --verbose
+uv run ml-lab train-text-classifier --output-dir artifacts/text-baseline --train-sample-limit 512 --val-sample-limit 128
+```
+
+The default training task is GLUE/SST-2 with `distilbert/distilbert-base-uncased`. This path is for content-understanding and tagging practice; it is not LLM pretraining.

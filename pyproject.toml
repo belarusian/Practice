@@ -32,6 +32,11 @@ training = [
   "torchaudio>=2.7.0",
   "torchvision>=0.22.0",
 ]
+transformer = [
+  "datasets>=3.6.0",
+  "torch>=2.7.0",
+  "transformers>=4.52.0",
+]
 vector = [
   "pgvector>=0.3.6",
   "psycopg[binary]>=3.2.7",
@@ -49,4 +54,3 @@ packages = ["src/industry_ml_lab"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-

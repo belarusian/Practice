@@ -30,7 +30,22 @@ Tasks:
 Why it matters:
 This gives you practical audio pipeline experience instead of leaving voice AI as a purely conceptual bullet point.
 
-## Phase 3: Labeling and Active Learning
+## Phase 3: Transformer Text Classification
+
+Goal:
+Add direct transformer fine-tuning experience for tagging and content understanding.
+
+Tasks:
+
+- fine-tune a DistilBERT-style classifier on GLUE/SST-2
+- add bounded smoke runs for cheap validation
+- save Hugging Face `save_pretrained()` artifacts and metrics
+- compare CPU, MPS, and CUDA behavior across machines
+
+Why it matters:
+This maps directly to classification, tagging, and content-understanding systems without jumping straight to expensive LLM pretraining.
+
+## Phase 4: Labeling and Active Learning
 
 Goal:
 Create a lightweight annotation workflow.
@@ -45,7 +60,7 @@ Tasks:
 Why it matters:
 This is how you move from model training to dataset improvement loops.
 
-## Phase 4: Retrieval and Semantic Search
+## Phase 5: Retrieval and Semantic Search
 
 Goal:
 Introduce embeddings and nearest-neighbor retrieval.
@@ -60,7 +75,7 @@ Tasks:
 Why it matters:
 It covers the retrieval and semantic-similarity part of the target profile.
 
-## Phase 5: Serving and Monitoring
+## Phase 6: Serving and Monitoring
 
 Goal:
 Deploy a model as an actual service.
@@ -75,7 +90,7 @@ Tasks:
 Why it matters:
 This is the bridge from notebooks to production behavior.
 
-## Phase 6: Workflow Orchestration
+## Phase 7: Workflow Orchestration
 
 Goal:
 Make training and promotion reproducible.
@@ -90,7 +105,7 @@ Tasks:
 Why it matters:
 Production ML depends on repeatable workflows, not ad hoc shell history.
 
-## Phase 7: AWS Deployment
+## Phase 8: AWS Deployment
 
 Goal:
 Practice cost-aware cloud deployment.
@@ -105,7 +120,7 @@ Tasks:
 Why it matters:
 This builds operational judgment around infrastructure, reliability, and cost.
 
-## Phase 8: Full-Stack Expansion
+## Phase 9: Full-Stack Expansion
 
 Goal:
 Touch the wider stack mentioned in the target job profile.
@@ -119,4 +134,3 @@ Tasks:
 
 Why it matters:
 This is where the repo grows from an ML lab into a more complete product-like system.
-

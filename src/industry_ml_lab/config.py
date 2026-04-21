@@ -38,6 +38,26 @@ class AudioTrainConfig:
 
 
 @dataclass(slots=True)
+class TextTrainConfig:
+    dataset_root: Path
+    output_dir: Path
+    epochs: int = 3
+    batch_size: int = 16
+    learning_rate: float = 2e-5
+    weight_decay: float = 0.01
+    num_workers: int = 0
+    device: str | None = None
+    model_name: str = "distilbert/distilbert-base-uncased"
+    dataset_name: str = "glue"
+    dataset_config: str | None = "sst2"
+    text_column: str = "sentence"
+    label_column: str = "label"
+    max_length: int = 128
+    train_sample_limit: int | None = None
+    val_sample_limit: int | None = None
+
+
+@dataclass(slots=True)
 class AppSettings:
     artifact_root: Path
     model_path: Path

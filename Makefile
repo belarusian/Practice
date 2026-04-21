@@ -1,9 +1,9 @@
 PYTHON := uv run
 
-.PHONY: sync sync-lite lint format test check training-mode sunny-proof sunny-proof-audio sunny-vision-smoke sunny-audio-smoke train-vision train-audio serve build-index search-index active-learning-report aws-bootstrap aws-budget aws-upload-artifacts aws-launch-trainer aws-build-and-push-api aws-launch-api
+.PHONY: sync sync-lite lint format test check training-mode sunny-proof sunny-proof-audio sunny-vision-smoke sunny-audio-smoke train-vision train-audio train-text-classifier serve build-index search-index active-learning-report aws-bootstrap aws-budget aws-upload-artifacts aws-launch-trainer aws-build-and-push-api aws-launch-api
 
 sync:
-	uv sync --extra dev --extra serving --extra training --extra vector --extra workflow
+	uv sync --extra dev --extra serving --extra training --extra transformer --extra vector --extra workflow
 
 sync-lite:
 	uv sync --extra dev
@@ -40,6 +40,9 @@ train-vision:
 
 train-audio:
 	$(PYTHON) ml-lab train-audio --epochs 1 --output-dir artifacts/audio-baseline
+
+train-text-classifier:
+	$(PYTHON) ml-lab train-text-classifier --epochs 1 --output-dir artifacts/text-baseline --train-sample-limit 512 --val-sample-limit 128
 
 serve:
 	$(PYTHON) uvicorn industry_ml_lab.serving.api:app --host 0.0.0.0 --port 8000 --reload

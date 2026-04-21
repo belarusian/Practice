@@ -130,6 +130,42 @@ def test_check_command_json_exits_nonzero_when_training_deps_are_missing(
     }
 
 
+def test_check_command_supports_text_target(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from industry_ml_lab.training import checklist
+
+    dataset_root = tmp_path / "data" / "text"
+    dataset_root.mkdir(parents=True)
+
+    monkeypatch.setattr(checklist, "_has_module", lambda name: name in {"torch"})
+
+    with pytest.raises(SystemExit, match="1"):
+        cli.main(
+            [
+                "check",
+                "--target",
+                "text",
+                "--device",
+                "cpu",
+                "--output-dir",
+                str(tmp_path / "artifacts" / "text"),
+                "--dataset-root",
+                str(dataset_root),
+                "--json",
+            ]
+        )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["target"] == "text"
+    assert payload["resolved_device"] == "cpu"
+    assert payload["is_ready"] is False
+    assert {check["name"] for check in payload["checks"] if check["status"] == "error"} == {
+        "dependency_transformers",
+        "dependency_datasets",
+    }
+
+
 def test_train_vision_fails_with_checklist_output_before_heavy_imports(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -149,4 +185,27 @@ def test_train_vision_fails_with_checklist_output_before_heavy_imports(
     output = capsys.readouterr().out
     assert "TRAINING ENVIRONMENT CHECKLIST" in output
     assert "dependency_torch" in output
+    assert "ModuleNotFoundError" not in output
+
+
+def test_train_text_classifier_fails_with_checklist_output_before_heavy_imports(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from industry_ml_lab.training import checklist
+
+    monkeypatch.setattr(checklist, "_has_module", lambda name: False)
+
+    with pytest.raises(SystemExit, match="1"):
+        cli.main(
+            [
+                "train-text-classifier",
+                "--output-dir",
+                str(tmp_path / "artifacts" / "text"),
+            ]
+        )
+
+    output = capsys.readouterr().out
+    assert "TRAINING ENVIRONMENT CHECKLIST" in output
+    assert "dependency_transformers" in output
+    assert "dependency_datasets" in output
     assert "ModuleNotFoundError" not in output

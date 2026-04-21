@@ -12,11 +12,12 @@ from pathlib import Path
 
 
 SUPPORTED_DEVICES = ("cpu", "cuda", "mps")
-SUPPORTED_TARGETS = ("vision", "audio")
+SUPPORTED_TARGETS = ("vision", "audio", "text")
 DEFAULT_TARGET = "vision"
 DEFAULT_REQUIRED_CUDA_VRAM_GB = 4.0
 DEFAULT_REQUIRED_DISK_GB = 5.0
 TRAINING_INSTALL_HINT = "Install training dependencies with: uv sync --extra training"
+TRANSFORMER_INSTALL_HINT = "Install transformer dependencies with: uv sync --extra transformer"
 
 
 @dataclasses.dataclass(slots=True)
@@ -123,6 +124,13 @@ def check_target_dependencies(target: str) -> list[CheckResult]:
         dependencies.append(("torchvision", "torchvision"))
     elif target == "audio":
         dependencies.append(("torchaudio", "torchaudio"))
+    elif target == "text":
+        dependencies.extend(
+            [
+                ("transformers", "Transformers"),
+                ("datasets", "Hugging Face Datasets"),
+            ]
+        )
 
     results: list[CheckResult] = []
     for module_name, display_name in dependencies:
@@ -140,7 +148,7 @@ def check_target_dependencies(target: str) -> list[CheckResult]:
                     name=f"dependency_{module_name}",
                     status="error",
                     message=f"{display_name} not installed",
-                    details=TRAINING_INSTALL_HINT,
+                    details=TRANSFORMER_INSTALL_HINT if target == "text" else TRAINING_INSTALL_HINT,
                 )
             )
     return results

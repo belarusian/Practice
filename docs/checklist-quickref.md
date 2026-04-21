@@ -19,6 +19,9 @@ uv run ml-lab check --target vision --device cuda --verbose
 # Check audio target
 uv run ml-lab check --target audio --verbose
 
+# Check transformer text target
+uv run ml-lab check --target text --verbose
+
 # JSON for CI/CD
 uv run ml-lab check --target vision --json
 ```
@@ -62,6 +65,7 @@ The checklist uses `torch.cuda.mem_get_info()` to get **actual free VRAM**, not 
 | `ml-lab check` | Manual | Verify environment |
 | `ml-lab train-vision` | Automatic | Fail fast if not ready |
 | `ml-lab train-audio` | Automatic | Fail fast if not ready |
+| `ml-lab train-text-classifier` | Automatic | Fail fast if not ready |
 | `ml-lab serve` | No | Serving doesn't need training checks |
 
 ## Common Scenarios on Sunny
@@ -88,6 +92,13 @@ nvidia-smi --gpu-reset
 ```bash
 # Train on CPU if GPU is busy
 uv run ml-lab train-vision --device cpu --output-dir artifacts/vision-baseline
+```
+
+### Transformer Text Classifier
+```bash
+# Install transformer deps, then run a bounded smoke-sized fine-tune
+uv sync --extra transformer
+uv run ml-lab train-text-classifier --output-dir artifacts/text-baseline --train-sample-limit 512 --val-sample-limit 128
 ```
 
 ## Best Practices for Sunny
