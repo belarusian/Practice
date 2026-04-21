@@ -15,6 +15,33 @@ $LogRoot = Join-Path $env:USERPROFILE "demo-stack-logs"
 $NvidiaSmi = Join-Path $env:WINDIR "System32\nvidia-smi.exe"
 New-Item -ItemType Directory -Path $LogRoot -Force | Out-Null
 
+function Get-LabEnv {
+    param(
+        [string]$Name,
+        [string]$Default
+    )
+    $value = [Environment]::GetEnvironmentVariable($Name)
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        return $Default
+    }
+    return $value
+}
+
+$LlamaRoot = Get-LabEnv -Name "SUNNY_LLAMA_ROOT" -Default "C:\ml-lab\llama.cpp"
+$ModelsRoot = Get-LabEnv -Name "SUNNY_MODELS_ROOT" -Default "C:\ml-lab\models"
+$VoiceLabRoot = Get-LabEnv -Name "SUNNY_VOICE_LAB_ROOT" -Default "C:\ml-lab\voice-lab"
+$WindowsScriptsRoot = Get-LabEnv -Name "SUNNY_WINDOWS_SCRIPTS_ROOT" -Default "C:\ml-lab"
+$LlamaServerExe = Join-Path $LlamaRoot "build\bin\llama-server.exe"
+$GptModelPath = Join-Path $LlamaRoot "models\gpt-oss-20b-mxfp4.gguf"
+$VisionModelPath = Join-Path $ModelsRoot "Qwen3VL-30B-A3B-Instruct-Q4_K_M.gguf"
+$VisionMmprojPath = Join-Path $ModelsRoot "mmproj-Qwen3VL-30B-A3B-Instruct-F16.gguf"
+$EmbeddingModelPath = Join-Path $ModelsRoot "Qwen3-Embedding-4B-Q4_K_M.gguf"
+$SttServerPath = Join-Path $VoiceLabRoot "servers\stt_server.py"
+$TtsServerPath = Join-Path $VoiceLabRoot "servers\tts_server.py"
+$TtsVoicePath = Join-Path $VoiceLabRoot "models\en_US-libritts_r-medium.onnx"
+$OcrServerPath = Join-Path $WindowsScriptsRoot "ocr_server.py"
+$DetectServerPath = Join-Path $WindowsScriptsRoot "detect_server.py"
+
 function Write-Section {
     param([string]$Message)
     Write-Host ""
@@ -103,9 +130,9 @@ if (-not $SkipGpt) {
         Name = "gpt-oss-20b"
         Slug = "gpt-oss-20b"
         Port = 8013
-        FilePath = "C:\Users\kodep\llama.cpp\build\bin\llama-server.exe"
-        ArgumentList = '-m models\gpt-oss-20b-mxfp4.gguf -a gpt-oss-20b -c 131072 -fa on -ngl 99 --jinja --port 8013 --host 0.0.0.0'
-        WorkingDirectory = "C:\Users\kodep\llama.cpp"
+        FilePath = $LlamaServerExe
+        ArgumentList = "-m `"$GptModelPath`" -a gpt-oss-20b -c 131072 -fa on -ngl 99 --jinja --port 8013 --host 0.0.0.0"
+        WorkingDirectory = $LlamaRoot
         HealthUrl = "http://127.0.0.1:8013/v1/models"
         ReadyAttempts = 30
     }
@@ -116,9 +143,9 @@ if (-not $SkipVision) {
         Name = "qwen3-vl"
         Slug = "qwen3-vl"
         Port = 8082
-        FilePath = "C:\Users\kodep\llama.cpp\build\bin\llama-server.exe"
-        ArgumentList = '-m C:\Users\kodep\models\Qwen3VL-30B-A3B-Instruct-Q4_K_M.gguf --mmproj C:\Users\kodep\models\mmproj-Qwen3VL-30B-A3B-Instruct-F16.gguf -np 1 -ngl 99 --host 0.0.0.0 --port 8082'
-        WorkingDirectory = "C:\Users\kodep\llama.cpp"
+        FilePath = $LlamaServerExe
+        ArgumentList = "-m `"$VisionModelPath`" --mmproj `"$VisionMmprojPath`" -np 1 -ngl 99 --host 0.0.0.0 --port 8082"
+        WorkingDirectory = $LlamaRoot
         HealthUrl = "http://127.0.0.1:8082/v1/models"
         ReadyAttempts = 30
     }
@@ -129,9 +156,9 @@ if (-not $SkipEmbed) {
         Name = "qwen3-embedding"
         Slug = "qwen3-embedding"
         Port = 8083
-        FilePath = "C:\Users\kodep\llama.cpp\build\bin\llama-server.exe"
-        ArgumentList = '-m C:\Users\kodep\models\Qwen3-Embedding-4B-Q4_K_M.gguf --embedding --host 0.0.0.0 --port 8083'
-        WorkingDirectory = "C:\Users\kodep\llama.cpp"
+        FilePath = $LlamaServerExe
+        ArgumentList = "-m `"$EmbeddingModelPath`" --embedding --host 0.0.0.0 --port 8083"
+        WorkingDirectory = $LlamaRoot
         HealthUrl = "http://127.0.0.1:8083/v1/models"
         ReadyAttempts = 20
     }
@@ -143,8 +170,8 @@ if (-not $SkipSpeech) {
         Slug = "stt-server"
         Port = 9001
         FilePath = "py"
-        ArgumentList = '-3.11 C:\Users\kodep\voice-lab\servers\stt_server.py --port 9001 --device cuda'
-        WorkingDirectory = "C:\Users\kodep\voice-lab"
+        ArgumentList = "-3.11 `"$SttServerPath`" --port 9001 --device cuda"
+        WorkingDirectory = $VoiceLabRoot
         HealthUrl = "http://127.0.0.1:9001/health"
         ReadyAttempts = 20
     }
@@ -153,8 +180,8 @@ if (-not $SkipSpeech) {
         Slug = "tts-server"
         Port = 9002
         FilePath = "py"
-        ArgumentList = '-3.11 C:\Users\kodep\voice-lab\servers\tts_server.py --port 9002 --voice C:\Users\kodep\voice-lab\models\en_US-libritts_r-medium.onnx'
-        WorkingDirectory = "C:\Users\kodep\voice-lab"
+        ArgumentList = "-3.11 `"$TtsServerPath`" --port 9002 --voice `"$TtsVoicePath`""
+        WorkingDirectory = $VoiceLabRoot
         HealthUrl = "http://127.0.0.1:9002/health"
         ReadyAttempts = 20
     }
@@ -166,8 +193,8 @@ if (-not $SkipOcr) {
         Slug = "ocr-server"
         Port = 9003
         FilePath = "py"
-        ArgumentList = '-3.11 C:\Users\kodep\ocr_server.py'
-        WorkingDirectory = "C:\Users\kodep"
+        ArgumentList = "-3.11 `"$OcrServerPath`""
+        WorkingDirectory = $WindowsScriptsRoot
         HealthUrl = "http://127.0.0.1:9003/health"
         ReadyAttempts = 20
     }
@@ -179,8 +206,8 @@ if (-not $SkipDetect) {
         Slug = "detect-server"
         Port = 9004
         FilePath = "py"
-        ArgumentList = '-3.11 C:\Users\kodep\detect_server.py'
-        WorkingDirectory = "C:\Users\kodep"
+        ArgumentList = "-3.11 `"$DetectServerPath`""
+        WorkingDirectory = $WindowsScriptsRoot
         HealthUrl = "http://127.0.0.1:9004/health"
         ReadyAttempts = 20
     }

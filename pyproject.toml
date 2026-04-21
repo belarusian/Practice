@@ -9,7 +9,14 @@ description = "A low-cost practice bed for training and deploying production-sty
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
-  { name = "OpenAI Codex" }
+  { name = "Industry ML Lab contributors" }
+]
+license = { file = "LICENSE" }
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
   "pydantic>=2.11.4",

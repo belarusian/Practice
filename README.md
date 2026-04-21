@@ -121,6 +121,8 @@ Push model and API artifacts to AWS with a cost-aware topology.
 - [Operating Model](docs/operating-model.md)
 - [AWS Deployment Notes](infra/aws/README.md)
 - [Sunny Ops](ops/sunny/README.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security](SECURITY.md)
 
 ## Machine Split
 
@@ -150,6 +152,8 @@ Current proven state on Sunny:
 - Windows Python `3.11` is the currently proven CUDA training path for this repo
 - repo-owned Sunny smoke runs are proven for vision, bounded audio, and bounded transformer text classification
 
+The public repo uses placeholder SSH targets and Windows paths. For a private lab checkout, copy `ops/sunny/lab.env.example` to `ops/sunny/lab.env` and set your own `SUNNY_*` values. `ops/sunny/lab.env` is gitignored.
+
 ## AWS Workflow
 
 The repo now includes a concrete AWS bootstrap path:
@@ -162,4 +166,8 @@ The repo now includes a concrete AWS bootstrap path:
 6. Run `make aws-build-and-push-api` to publish the API container to ECR.
 7. Run `make aws-launch-api` to launch a CPU EC2 instance that pulls the container and serves the model.
 
-The AWS scripts live under [infra/aws/scripts](/Users/av4nda/Practice/infra/aws/scripts:1) and assume `us-east-1` by default.
+The AWS scripts live under [infra/aws/scripts](infra/aws/scripts) and assume `us-east-1` by default.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).

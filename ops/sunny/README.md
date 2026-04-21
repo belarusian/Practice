@@ -93,8 +93,8 @@ After rsync pulls `artifacts/sunny-reports/<stamp>/`, they run **`exit_from_summ
 Before adding audio smoke, prove the Windows runtime on Sunny (PowerShell on the box or via WSL):
 
 ```powershell
-Set-Location '\\wsl.localhost\Ubuntu\home\sasha\Practice'
-$env:PYTHONPATH = '\\wsl.localhost\Ubuntu\home\sasha\Practice\src'
+Set-Location '\\wsl.localhost\Ubuntu\home\ml-lab\Practice'
+$env:PYTHONPATH = '\\wsl.localhost\Ubuntu\home\ml-lab\Practice\src'
 py -3.11 -c "import importlib.util, json, torch; print(json.dumps({'torch': True, 'torchaudio': importlib.util.find_spec('torchaudio') is not None, 'cuda_available': torch.cuda.is_available()}, indent=2))"
 ```
 
@@ -163,12 +163,14 @@ These scripts assume the current audited layout on Sunny:
 
 - WSL2 services are managed by `systemd`
 - Windows-side Python uses `py -3.11`
-- `llama-server.exe` lives under `C:\Users\kodep\llama.cpp\build\bin\`
-- model weights live under `C:\Users\kodep\models`
-- `voice-lab` lives under `C:\Users\kodep\voice-lab`
-- `ocr_server.py` and `detect_server.py` live under `C:\Users\kodep\`
+- `llama-server.exe` lives under `SUNNY_LLAMA_ROOT\build\bin\`
+- model weights live under `SUNNY_MODELS_ROOT`
+- `voice-lab` lives under `SUNNY_VOICE_LAB_ROOT`
+- `ocr_server.py` and `detect_server.py` live under `SUNNY_WINDOWS_SCRIPTS_ROOT`
 
 If those paths change, update this directory first so the repo stays authoritative.
+
+Public defaults use placeholder values. For a private lab checkout, copy `ops/sunny/lab.env.example` to `ops/sunny/lab.env` and set the real `SUNNY_*` variables there. That file is ignored by git.
 
 ## Mode Split
 
