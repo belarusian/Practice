@@ -104,10 +104,9 @@ What is verified:
 
 Direct SSH works.
 
-Validated:
+Validated in the private lab:
 
-- host is reachable at `10.106.1.184`
-- hostname: `SashasMacStudio.mynetworksettings.com`
+- host is reachable on the private LAN
 - live listener observed: `llama-server` on `:8080`
 
 Correction (applied in repo):
@@ -117,7 +116,7 @@ Correction (applied in repo):
 
 ### Sunny WSL2
 
-Sunny is reachable through the EC2 plus WireGuard path at `10.200.0.2`.
+Sunny is reachable through the EC2 plus WireGuard path in the private lab. Public docs use `SUNNY_SSH_TARGET`, `SUNNY_PROXY_TARGET`, and related placeholders instead of real host values.
 
 Validated:
 
@@ -142,7 +141,7 @@ Validated:
   - Element/nginx `200`
   - phone webhook `200`
 - WireGuard was healthy during audit with a fresh handshake to the EC2 peer
-- `uv` is present in WSL at `/home/sasha/.local/bin/uv`
+- `uv` is present in WSL at a user-local path
 - the remote Sunny proof run reported WSL Python as `3.10.12`
 - the remote Sunny proof run reported no WSL training modules installed:
   - `torch`: `false`

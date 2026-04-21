@@ -4,13 +4,20 @@ set -euo pipefail
 set -o pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+LAB_ENV_FILE="${SUNNY_LAB_ENV_FILE:-$ROOT_DIR/ops/sunny/lab.env}"
+if [[ -f "$LAB_ENV_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$LAB_ENV_FILE"
+  set +a
+fi
 STAMP="$(date +%Y%m%d-%H%M%S)"
 LOCAL_REPORT_DIR="$ROOT_DIR/artifacts/sunny-reports/$STAMP"
-REMOTE_REPO_DIR="${SUNNY_REPO_DIR:-/home/sasha/Practice}"
+REMOTE_REPO_DIR="${SUNNY_REPO_DIR:-/home/ml-lab/Practice}"
 REMOTE_REPORT_DIR="$REMOTE_REPO_DIR/artifacts/sunny-reports/$STAMP"
-SUNNY_SSH_TARGET="${SUNNY_SSH_TARGET:-sasha@10.200.0.2}"
-SUNNY_PROXY_TARGET="${SUNNY_PROXY_TARGET:-ubuntu@54.243.75.156}"
-SUNNY_PROXY_KEY="${SUNNY_PROXY_KEY:-$HOME/.ssh/cc-proxy.pem}"
+SUNNY_SSH_TARGET="${SUNNY_SSH_TARGET:-mlops@10.0.0.2}"
+SUNNY_PROXY_TARGET="${SUNNY_PROXY_TARGET:-ubuntu@203.0.113.10}"
+SUNNY_PROXY_KEY="${SUNNY_PROXY_KEY:-$HOME/.ssh/example-proxy-key.pem}"
 SUNNY_IDENTITY_FILE="${SUNNY_IDENTITY_FILE:-$HOME/.ssh/id_ed25519}"
 TARGET="vision"
 DEVICE="cuda"

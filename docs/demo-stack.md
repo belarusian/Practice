@@ -14,7 +14,7 @@ It exists to prove that we can run:
 
 In practical terms, this is the stack that lets us:
 
-- receive real phone calls through `voice.compsci.boutique`
+- receive real phone calls through a public voice endpoint such as `voice.example.com`
 - run computer-use demos with OCR, detection, and vision reasoning
 - keep a public-facing, demoable system online while we study the model-building side
 
@@ -32,7 +32,7 @@ The next phase is different. We are moving from "run interesting models" to "pra
 | `8008` `synapse` | Matrix homeserver |
 | `8080` `nginx` / Element | Web entry for chat stack |
 | `8765` `voice-phone.service` | FastAPI phone server for Twilio webhook and media stream |
-| `wg0` `10.200.0.2/24` | WireGuard tunnel endpoint back to AWS |
+| `wg0` private lab address | WireGuard tunnel endpoint back to AWS |
 
 ### Sunny Windows
 
@@ -58,9 +58,9 @@ Live listener on this host was validated at `:8080` (not `:8013`; Sunny Windows 
 
 | Component | Purpose |
 | --- | --- |
-| Route53 | Public DNS for `compsci.boutique` |
+| Route53 | Public DNS for the lab domain |
 | EC2 proxy | TLS termination, reverse proxy, WireGuard endpoint |
-| Let's Encrypt | Public certs for `chat.compsci.boutique` and `voice.compsci.boutique` |
+| Let's Encrypt | Public certs for chat and voice subdomains |
 
 ## Why This Matters
 

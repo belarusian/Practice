@@ -3,6 +3,13 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+LAB_ENV_FILE="${SUNNY_LAB_ENV_FILE:-$ROOT_DIR/ops/sunny/lab.env}"
+if [[ -f "$LAB_ENV_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$LAB_ENV_FILE"
+  set +a
+fi
 POWERSHELL="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
 SERVICES=(
   ssh

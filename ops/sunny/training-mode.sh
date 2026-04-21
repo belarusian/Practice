@@ -3,6 +3,13 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+LAB_ENV_FILE="${SUNNY_LAB_ENV_FILE:-$ROOT_DIR/ops/sunny/lab.env}"
+if [[ -f "$LAB_ENV_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$LAB_ENV_FILE"
+  set +a
+fi
 POWERSHELL="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
 NVIDIA_SMI="/mnt/c/Windows/System32/nvidia-smi.exe"
 MIN_FREE_VRAM_MB="${MIN_FREE_VRAM_MB:-4096}"
@@ -133,4 +140,3 @@ if [[ "$AUDIT_AFTER_STOP" == true ]]; then
 fi
 
 training_preflight
-

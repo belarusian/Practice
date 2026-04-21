@@ -189,9 +189,9 @@ The following are no longer open questions:
 
 Evidence exists in:
 
-- [artifacts/sunny-reports/20260420-121355/windows-ml-lab-check.txt](/Users/av4nda/Practice/artifacts/sunny-reports/20260420-121355/windows-ml-lab-check.txt:1)
-- [artifacts/sunny-reports/20260420-121355/windows-torch-cuda.txt](/Users/av4nda/Practice/artifacts/sunny-reports/20260420-121355/windows-torch-cuda.txt:1)
-- [artifacts/sunny-reports/20260420-121355/wsl-ml-lab-check.txt](/Users/av4nda/Practice/artifacts/sunny-reports/20260420-121355/wsl-ml-lab-check.txt:1)
+- `artifacts/sunny-reports/<timestamp>/windows-ml-lab-check.txt`
+- `artifacts/sunny-reports/<timestamp>/windows-torch-cuda.txt`
+- `artifacts/sunny-reports/<timestamp>/wsl-ml-lab-check.txt`
 
 ## What Is Still Only Partially Proven
 

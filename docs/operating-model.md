@@ -61,7 +61,7 @@ The repo should own:
 
 The repo should not own:
 
-- model weights under `C:\Users\kodep\models`
+- model weights under a host-local path such as `C:\ml-lab\models`
 - Twilio credentials
 - AWS credentials
 - local venv caches

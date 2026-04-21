@@ -24,12 +24,12 @@ Do not treat WSL2 as the active training runtime unless someone explicitly upgra
 
 From an operator laptop or workstation, the current access route assumes:
 
-- SSH key for Sunny WSL2 at `~/.ssh/id_ed25519`
-- SSH key for the EC2 proxy at `~/.ssh/cc-proxy.pem`
-- access to the AWS edge host `ubuntu@54.243.75.156`
-- Sunny reachable through the WireGuard address `10.200.0.2`
+- SSH key for Sunny WSL2, configured with `SUNNY_IDENTITY_FILE`
+- optional SSH proxy key, configured with `SUNNY_PROXY_KEY`
+- optional SSH proxy host, configured with `SUNNY_PROXY_TARGET`
+- Sunny WSL2 SSH target, configured with `SUNNY_SSH_TARGET`
 
-If any of those assumptions change, update this repo first.
+Public defaults are placeholders. For a private lab checkout, copy `ops/sunny/lab.env.example` to `ops/sunny/lab.env` and put the real values there. Do not commit `ops/sunny/lab.env`.
 
 ## Preferred Access Path
 
@@ -52,16 +52,21 @@ It is better than guessing whether Sunny is ready.
 Use this exact command from another machine:
 
 ```bash
-ssh -o ProxyCommand="ssh -i ~/.ssh/cc-proxy.pem -W %h:%p ubuntu@54.243.75.156" \
+export SUNNY_SSH_TARGET="mlops@10.0.0.2"
+export SUNNY_PROXY_TARGET="ubuntu@203.0.113.10"
+export SUNNY_PROXY_KEY="$HOME/.ssh/example-proxy-key.pem"
+export SUNNY_IDENTITY_FILE="$HOME/.ssh/id_ed25519"
+
+ssh -o ProxyCommand="ssh -i $SUNNY_PROXY_KEY -W %h:%p $SUNNY_PROXY_TARGET" \
   -o ConnectTimeout=8 \
-  -i ~/.ssh/id_ed25519 \
-  sasha@10.200.0.2
+  -i "$SUNNY_IDENTITY_FILE" \
+  "$SUNNY_SSH_TARGET"
 ```
 
 Once connected, the repo path on Sunny is:
 
 ```bash
-cd /home/sasha/Practice
+cd "${SUNNY_REPO_DIR:-/home/ml-lab/Practice}"
 ```
 
 ## Sync The Repo To Sunny
@@ -85,8 +90,8 @@ rsync -az \
   --exclude 'artifacts/' \
   --exclude 'data/' \
   /path/to/Practice/ \
-  -e "ssh -o 'ProxyCommand=ssh -i ~/.ssh/cc-proxy.pem -W %h:%p ubuntu@54.243.75.156' -i ~/.ssh/id_ed25519" \
-  sasha@10.200.0.2:/home/sasha/Practice/
+  -e "ssh -o 'ProxyCommand=ssh -i $SUNNY_PROXY_KEY -W %h:%p $SUNNY_PROXY_TARGET' -i $SUNNY_IDENTITY_FILE" \
+  "$SUNNY_SSH_TARGET:${SUNNY_REPO_DIR:-/home/ml-lab/Practice}/"
 ```
 
 If you do not need fine-grained control, `make sunny-proof` is the better default because it syncs and proves in one step.
@@ -96,7 +101,7 @@ If you do not need fine-grained control, `make sunny-proof` is the better defaul
 From Sunny WSL2:
 
 ```bash
-cd /home/sasha/Practice
+cd "${SUNNY_REPO_DIR:-/home/ml-lab/Practice}"
 bash ops/sunny/audit-demo-stack.sh
 ```
 
@@ -111,7 +116,7 @@ This tells you:
 From Sunny WSL2:
 
 ```bash
-cd /home/sasha/Practice
+cd "${SUNNY_REPO_DIR:-/home/ml-lab/Practice}"
 bash ops/sunny/training-mode.sh --dry-run
 bash ops/sunny/training-mode.sh
 ```
@@ -133,7 +138,7 @@ bash ops/sunny/training-mode.sh --restore-demo
 From Sunny WSL2:
 
 ```bash
-cd /home/sasha/Practice
+cd "${SUNNY_REPO_DIR:-/home/ml-lab/Practice}"
 bash ops/sunny/prove-training-runtime.sh --with-training-mode --restore-demo
 ```
 
@@ -179,7 +184,7 @@ For Sunny host validation, use:
 If you are already logged into Sunny WSL2, the direct host-side commands are:
 
 ```bash
-cd /home/sasha/Practice
+cd "${SUNNY_REPO_DIR:-/home/ml-lab/Practice}"
 bash ops/sunny/prove-training-runtime.sh --with-training-mode --restore-demo
 bash ops/sunny/vision-smoke.sh
 bash ops/sunny/audio-smoke.sh
@@ -199,8 +204,8 @@ There are two practical ways to reach it.
 If you are physically on Sunny or already operating in the Windows session, open PowerShell and use:
 
 ```powershell
-Set-Location '\\wsl.localhost\Ubuntu\home\sasha\Practice'
-$env:PYTHONPATH = '\\wsl.localhost\Ubuntu\home\sasha\Practice\src'
+Set-Location '\\wsl.localhost\Ubuntu\home\ml-lab\Practice'
+$env:PYTHONPATH = '\\wsl.localhost\Ubuntu\home\ml-lab\Practice\src'
 py -3.11 -m industry_ml_lab.cli check --target vision --device cuda --output-dir artifacts/windows-proof --json
 ```
 
@@ -211,15 +216,15 @@ This is the current known-good readiness command.
 From Sunny WSL2:
 
 ```bash
-cd /home/sasha/Practice
+cd "${SUNNY_REPO_DIR:-/home/ml-lab/Practice}"
 /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile
 ```
 
 Then inside PowerShell:
 
 ```powershell
-Set-Location '\\wsl.localhost\Ubuntu\home\sasha\Practice'
-$env:PYTHONPATH = '\\wsl.localhost\Ubuntu\home\sasha\Practice\src'
+Set-Location '\\wsl.localhost\Ubuntu\home\ml-lab\Practice'
+$env:PYTHONPATH = '\\wsl.localhost\Ubuntu\home\ml-lab\Practice\src'
 py -3.11 -m industry_ml_lab.cli check --target vision --device cuda --output-dir artifacts/windows-proof --json
 ```
 
@@ -246,8 +251,8 @@ Do **not** tell people that WSL `uv sync`, `pytest`, or `make test` are the acti
 This command is proven on Sunny Windows:
 
 ```powershell
-Set-Location '\\wsl.localhost\Ubuntu\home\sasha\Practice'
-$env:PYTHONPATH = '\\wsl.localhost\Ubuntu\home\sasha\Practice\src'
+Set-Location '\\wsl.localhost\Ubuntu\home\ml-lab\Practice'
+$env:PYTHONPATH = '\\wsl.localhost\Ubuntu\home\ml-lab\Practice\src'
 py -3.11 -m industry_ml_lab.cli check --target vision --device cuda --output-dir artifacts/windows-proof --json
 ```
 
@@ -271,7 +276,7 @@ make sunny-vision-smoke
 Directly from Sunny WSL2:
 
 ```bash
-cd /home/sasha/Practice
+cd "${SUNNY_REPO_DIR:-/home/ml-lab/Practice}"
 bash ops/sunny/vision-smoke.sh
 ```
 
@@ -296,7 +301,7 @@ make sunny-audio-smoke
 Directly from Sunny WSL2:
 
 ```bash
-cd /home/sasha/Practice
+cd "${SUNNY_REPO_DIR:-/home/ml-lab/Practice}"
 bash ops/sunny/audio-smoke.sh
 ```
 
@@ -327,7 +332,7 @@ make sunny-text-smoke
 Directly from Sunny WSL2:
 
 ```bash
-cd /home/sasha/Practice
+cd "${SUNNY_REPO_DIR:-/home/ml-lab/Practice}"
 bash ops/sunny/text-smoke.sh
 ```
 
