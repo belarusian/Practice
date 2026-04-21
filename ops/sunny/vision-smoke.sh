@@ -131,6 +131,10 @@ capture_cmd \
   -Epochs "$EPOCHS" \
   -Device "$DEVICE"
 
+capture_cmd \
+  "windows-vision-summary-check" \
+  python3 "$ROOT_DIR/ops/sunny/exit_from_summary_json.py" "$REPORT_DIR/windows-vision-smoke-summary.json"
+
 if [[ "$RESTORE_DEMO" == true ]]; then
   capture_cmd "restore-demo" timeout "$RESTORE_TIMEOUT_SECONDS" bash "$ROOT_DIR/ops/sunny/training-mode.sh" --restore-demo
   capture_cmd "audit-after-restore" bash "$ROOT_DIR/ops/sunny/audit-demo-stack.sh"

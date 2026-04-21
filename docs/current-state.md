@@ -41,6 +41,7 @@ Status:
 - most of the lightweight regression coverage passes on this machine
 - pure-Python and CLI surfaces are present
 - heavyweight runtime paths are still only partially runtime-validated
+- local `pytest` results are useful regression signals, but they are not the authoritative Sunny runtime proof path
 
 ## Validated Coder 1 Contributions
 
@@ -259,6 +260,26 @@ Interpretation:
 - the repo-owned **train-vision** path is now runtime-proven on Sunny’s Windows CUDA stack, not only `ml-lab check`
 - WSL remains ops and mode-switch only for training
 
+### Sunny Audio Smoke (repo-owned Windows train)
+
+Validated **2026-04-20** on Sunny from a laptop-triggered run (`make sunny-audio-smoke`):
+
+- `ops/sunny/audio-smoke.sh` stopped the Windows demo GPU services, then ran `audio-smoke.ps1` on Windows Python `3.11` with CUDA
+- the Windows runtime now has a working `torchaudio` loader backend (`soundfile`) and stages `data/audio` off the `\\wsl.localhost\...` path into a Windows-local cache for training I/O
+- the smoke path uses a bounded training slice (`train_sample_limit=1024`, `val_sample_limit=256`) so it proves the end-to-end audio train path without turning the smoke run into a full-dataset benchmark
+- one epoch of SpeechCommands audio training completed on the 4090 and wrote `metrics.json` plus `model.pt` under the report’s `audio-artifacts/` directory
+- the validated green run reported:
+  - `windows-train-audio` exit `0`
+  - `windows-metrics-json` exit `0`
+  - `windows-audio-summary-check` exit `0`
+  - `duration_seconds` about `1.6`
+
+Interpretation:
+
+- the repo-owned **train-audio** path is now runtime-proven on Sunny’s Windows CUDA stack for bounded smoke training, not only `ml-lab check --target audio`
+- WSL remains the ops and mode-switch layer; Windows remains the active trainer
+- audio smoke is now suitable as a rehearsal gate, not as a benchmark of full SpeechCommands training throughput
+
 ## Processed View Of Coder 2 Report
 
 Coder 2's repository analysis is directionally correct and consistent with the codebase.
@@ -332,7 +353,7 @@ It is the remaining Sunny training-runtime decision:
 ## Recommended Next Steps
 
 1. Re-validate direct LAN SSH access to Sunny after the elevated Windows port-forward refresh.
-2. Add a repo-owned audio smoke path on Sunny Windows comparable to `make sunny-vision-smoke`, or explicitly defer audio.
+2. Tighten the remaining restore-tail behavior in the remote smoke wrappers so the outer run finalizes as cleanly as the nested Windows report.
 3. Decide explicitly whether WSL2 should stay service-only or be upgraded later to Python `3.11` plus training deps.
 4. Treat each training session as a mode transition:
    - `bash ops/sunny/training-mode.sh`
@@ -356,9 +377,9 @@ Verified:
 - Sunny WSL2 is not currently training-ready
 - Sunny Windows Python `3.11` is the currently proven CUDA training path
 - repo-owned vision smoke training (`make sunny-vision-smoke`) has completed end-to-end on Sunny with real metrics and `model.pt` artifacts (2026-04-20)
+- repo-owned bounded audio smoke training (`make sunny-audio-smoke`) has completed end-to-end on Sunny with real metrics and `model.pt` artifacts (2026-04-20)
 
 Not yet verified:
 
 - direct LAN SSH path to Sunny
-- repo-owned audio training smoke on Sunny Windows
 - full serving and workflow execution paths for the ML lab

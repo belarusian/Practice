@@ -24,6 +24,36 @@ $ErrorActionPreference = "Stop"
 [void](New-Item -ItemType Directory -Force -Path $ReportDir)
 [void](New-Item -ItemType Directory -Force -Path $OutputDir)
 
+function Test-IsWslUncPath {
+    param([string]$Path)
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        return $false
+    }
+    return $Path.Trim().StartsWith('\\wsl', [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+# torchaudio.load() on Windows often fails on \\wsl.localhost\... UNC paths; stage to a local NTFS path.
+$TrainDatasetRoot = $DatasetRoot
+if (Test-IsWslUncPath -Path $DatasetRoot) {
+    $StagingRoot = Join-Path $env:LOCALAPPDATA "industry-ml-lab\audio-smoke-speech-commands"
+    [void](New-Item -ItemType Directory -Force -Path $StagingRoot)
+    $robocopyLog = Join-Path $ReportDir "windows-dataset-staging-robocopy.log"
+    $robocopyExe = Join-Path $env:SystemRoot "System32\robocopy.exe"
+    & $robocopyExe $DatasetRoot $StagingRoot /E /R:2 /W:2 /NP /NFL /NDL /NJH /NJS /LOG:$robocopyLog
+    $rc = [int]$LASTEXITCODE
+    if ($rc -ge 8) {
+        throw "robocopy dataset staging failed: exit_code=$rc log=$robocopyLog"
+    }
+    $TrainDatasetRoot = $StagingRoot
+    $stagingNote = @(
+        "dataset_source_root=$DatasetRoot"
+        "dataset_staging_root=$StagingRoot"
+        "robocopy_exit_code=$rc"
+        "robocopy_log=$robocopyLog"
+    ) -join "`r`n"
+    Set-Content -Path (Join-Path $ReportDir "windows-dataset-staging.txt") -Value $stagingNote -Encoding utf8
+}
+
 $results = New-Object System.Collections.Generic.List[object]
 $TempRoot = Join-Path $env:TEMP "industry-ml-lab"
 [void](New-Item -ItemType Directory -Force -Path $TempRoot)
@@ -112,6 +142,8 @@ function Save-NativeStep {
     if (Test-Path $stderrPath) {
         $stderr = Get-Content -Path $stderrPath -Raw
     }
+    if ($null -eq $stdout) { $stdout = "" }
+    if ($null -eq $stderr) { $stderr = "" }
 
     $combined = @(
         "COMMAND: $commandText"
@@ -139,7 +171,7 @@ import traceback
 from pathlib import Path
 
 output_dir = Path(r"$OutputDir")
-dataset_root = Path(r"$DatasetRoot")
+dataset_root = Path(r"$TrainDatasetRoot")
 traceback_path = Path(r"$ReportDir") / "windows-train-audio-traceback.txt"
 
 try:
@@ -154,6 +186,8 @@ try:
         learning_rate=5e-4,
         num_workers=0,
         device=r"$Device",
+        train_sample_limit=1024,
+        val_sample_limit=256,
     )
 
     metrics = train(config)
@@ -172,7 +206,7 @@ Set-Location $RepoRoot
 
 Save-Step "windows-python-version" { py -3.11 --version }
 Save-Step "windows-audio-check" {
-    py -3.11 -m industry_ml_lab.cli check --target audio --device $Device --output-dir $OutputDir --dataset-root $DatasetRoot --json
+    py -3.11 -m industry_ml_lab.cli check --target audio --device $Device --output-dir $OutputDir --dataset-root $TrainDatasetRoot --json
 }
 Save-NativeStep "windows-train-audio" "py" @("-3.11", $TrainProbePath)
 Save-Step "windows-output-listing" {
@@ -191,6 +225,7 @@ $summary = [pscustomobject]@{
     repo_src = $RepoSrc
     output_dir = $OutputDir
     dataset_root = $DatasetRoot
+    dataset_effective_root = $TrainDatasetRoot
     epochs = $Epochs
     device = $Device
     all_commands_succeeded = (@($results | Where-Object { $_.exit_code -ne 0 }).Count -eq 0)
@@ -198,3 +233,7 @@ $summary = [pscustomobject]@{
 }
 $summary | ConvertTo-Json -Depth 4 | Set-Content -Path $summaryPath -Encoding utf8
 $summary | ConvertTo-Json -Depth 4
+
+if (-not $summary.all_commands_succeeded) {
+    exit 1
+}

@@ -32,7 +32,11 @@ def _subset_dataset(root: Path, subset: str):
 
 
 def _prepare_label_maps(dataset) -> tuple[list[str], dict[str, int]]:
-    labels = sorted({sample[2] for sample in dataset})
+    walker = getattr(dataset, "_walker", None)
+    if walker:
+        labels = sorted({Path(path).parent.name for path in walker})
+    else:
+        labels = sorted({sample[2] for sample in dataset})
     return labels, {label: index for index, label in enumerate(labels)}
 
 
@@ -139,7 +143,7 @@ def train(config: AudioTrainConfig) -> dict[str, object]:
     from torch import nn
     from torch.optim import AdamW
     from torch.optim.lr_scheduler import CosineAnnealingLR
-    from torch.utils.data import DataLoader
+    from torch.utils.data import DataLoader, Subset
 
     config.output_dir.mkdir(parents=True, exist_ok=True)
     config.dataset_root.mkdir(parents=True, exist_ok=True)
@@ -148,6 +152,17 @@ def train(config: AudioTrainConfig) -> dict[str, object]:
     train_dataset = _subset_dataset(config.dataset_root, "training")
     val_dataset = _subset_dataset(config.dataset_root, "validation")
     labels, label_to_index = _prepare_label_maps(train_dataset)
+
+    if config.train_sample_limit is not None:
+        train_dataset = Subset(
+            train_dataset,
+            range(min(config.train_sample_limit, len(train_dataset))),
+        )
+    if config.val_sample_limit is not None:
+        val_dataset = Subset(
+            val_dataset,
+            range(min(config.val_sample_limit, len(val_dataset))),
+        )
 
     train_loader = DataLoader(
         train_dataset,
@@ -202,6 +217,8 @@ def train(config: AudioTrainConfig) -> dict[str, object]:
         "dataset": "SpeechCommands",
         "device": device,
         "epochs": config.epochs,
+        "train_sample_limit": config.train_sample_limit,
+        "val_sample_limit": config.val_sample_limit,
         "duration_seconds": round(time.time() - started_at, 2),
         "best_val_accuracy": max(item["val_accuracy"] for item in history),
         "history": history,

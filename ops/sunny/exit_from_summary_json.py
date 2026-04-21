@@ -17,7 +17,7 @@ def main() -> int:
         print(f"exit_from_summary_json: missing {path}", file=sys.stderr)
         return 2
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
     except (OSError, json.JSONDecodeError) as exc:
         print(f"exit_from_summary_json: {exc}", file=sys.stderr)
         return 2

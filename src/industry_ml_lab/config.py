@@ -33,6 +33,8 @@ class AudioTrainConfig:
     weight_decay: float = 1e-4
     num_workers: int = _default_workers()
     device: str | None = None
+    train_sample_limit: int | None = None
+    val_sample_limit: int | None = None
 
 
 @dataclass(slots=True)
@@ -55,4 +57,3 @@ class AppSettings:
             temporal_address=os.getenv("TEMPORAL_ADDRESS", "localhost:7233"),
             temporal_task_queue=os.getenv("TEMPORAL_TASK_QUEUE", "industry-ml-lab"),
         )
-
