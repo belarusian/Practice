@@ -136,17 +136,19 @@ On Sunny, use:
 - `bash ops/sunny/training-mode.sh --restore-demo` to bring the demo GPU services back
 - `bash ops/sunny/prove-training-runtime.sh --with-training-mode --restore-demo` to produce a host-local report of WSL and Windows training readiness
 - `bash ops/sunny/vision-smoke.sh` to run the repo-owned Windows vision smoke training flow from Sunny WSL2
+- `bash ops/sunny/text-smoke.sh` to run the repo-owned Windows transformer text-classifier smoke flow from Sunny WSL2
 
 This mode split has already been validated on Sunny: the live demo stack used about `23.7 GiB` to `23.9 GiB` of 4090 VRAM, `training-mode.sh` reduced that to about `1.1 GiB` used with `23.5 GiB` free, and restore returned the demo services to healthy status.
 
 From a separate machine, use `bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo` to sync the repo to Sunny, run the proof there, and pull the report back under `artifacts/sunny-reports/`.
 
-For the current repo-owned Windows training smoke loop from another machine, use `bash ops/sunny/run-remote-vision-smoke.sh`.
+For the current repo-owned Windows training smoke loops from another machine, use `bash ops/sunny/run-remote-vision-smoke.sh`, `bash ops/sunny/run-remote-audio-smoke.sh`, or `bash ops/sunny/run-remote-text-smoke.sh`.
 
 Current proven state on Sunny:
 
 - WSL2 is healthy for services and ops, but not yet training-ready
 - Windows Python `3.11` is the currently proven CUDA training path for this repo
+- repo-owned Sunny smoke runs are proven for vision, bounded audio, and bounded transformer text classification
 
 ## AWS Workflow
 

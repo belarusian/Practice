@@ -119,7 +119,7 @@ import importlib.util
 import json
 import sys
 
-modules = ["torch", "torchvision", "torchaudio"]
+modules = ["torch", "torchvision", "torchaudio", "transformers", "datasets"]
 payload = {
     "python_version": sys.version,
     "modules": {name: importlib.util.find_spec(name) is not None for name in modules},

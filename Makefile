@@ -1,6 +1,6 @@
 PYTHON := uv run
 
-.PHONY: sync sync-lite lint format test check training-mode sunny-proof sunny-proof-audio sunny-vision-smoke sunny-audio-smoke train-vision train-audio train-text-classifier serve build-index search-index active-learning-report aws-bootstrap aws-budget aws-upload-artifacts aws-launch-trainer aws-build-and-push-api aws-launch-api
+.PHONY: sync sync-lite lint format test check training-mode sunny-proof sunny-proof-audio sunny-proof-text sunny-vision-smoke sunny-audio-smoke sunny-text-smoke train-vision train-audio train-text-classifier serve build-index search-index active-learning-report aws-bootstrap aws-budget aws-upload-artifacts aws-launch-trainer aws-build-and-push-api aws-launch-api
 
 sync:
 	uv sync --extra dev --extra serving --extra training --extra transformer --extra vector --extra workflow
@@ -29,11 +29,17 @@ sunny-proof:
 sunny-proof-audio:
 	bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo --target audio
 
+sunny-proof-text:
+	bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo --target text
+
 sunny-vision-smoke:
 	bash ops/sunny/run-remote-vision-smoke.sh
 
 sunny-audio-smoke:
 	bash ops/sunny/run-remote-audio-smoke.sh
+
+sunny-text-smoke:
+	bash ops/sunny/run-remote-text-smoke.sh
 
 train-vision:
 	$(PYTHON) ml-lab train-vision --epochs 1 --output-dir artifacts/vision-baseline

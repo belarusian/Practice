@@ -55,7 +55,7 @@ $moduleProbe = @'
 import importlib.util
 import json
 
-mods = ["torch", "torchvision", "torchaudio"]
+mods = ["torch", "torchvision", "torchaudio", "transformers", "datasets"]
 payload = {name: importlib.util.find_spec(name) is not None for name in mods}
 print(json.dumps(payload, indent=2))
 '@
