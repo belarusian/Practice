@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import sys
 
-from industry_ml_lab.config import AudioTrainConfig, VisionTrainConfig
+from industry_ml_lab.config import AudioTrainConfig, TextTrainConfig, VisionTrainConfig
 
 
 def _add_common_training_args(parser: argparse.ArgumentParser) -> None:
@@ -30,6 +30,20 @@ def _build_parser() -> argparse.ArgumentParser:
 
     audio_parser = subparsers.add_parser("train-audio", help="Train the audio classification baseline.")
     _add_common_training_args(audio_parser)
+
+    text_parser = subparsers.add_parser(
+        "train-text-classifier",
+        help="Fine-tune a transformer text classification baseline.",
+    )
+    _add_common_training_args(text_parser)
+    text_parser.add_argument("--model-name", default="distilbert/distilbert-base-uncased")
+    text_parser.add_argument("--dataset-name", default="glue")
+    text_parser.add_argument("--dataset-config", default="sst2")
+    text_parser.add_argument("--text-column", default="sentence")
+    text_parser.add_argument("--label-column", default="label")
+    text_parser.add_argument("--max-length", type=int, default=128)
+    text_parser.add_argument("--train-sample-limit", type=int, default=None)
+    text_parser.add_argument("--val-sample-limit", type=int, default=None)
 
     serve_parser = subparsers.add_parser("serve", help="Run the FastAPI service.")
     serve_parser.add_argument("--host", default="0.0.0.0")
@@ -68,7 +82,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "check",
         help="Check training environment prerequisites.",
     )
-    check_parser.add_argument("--target", choices=("vision", "audio"), default="vision")
+    check_parser.add_argument("--target", choices=("vision", "audio", "text"), default="vision")
     check_parser.add_argument("--device", choices=("cpu", "cuda", "mps"), default=None)
     check_parser.add_argument("--output-dir", type=Path, default=None, help="Output directory for artifacts")
     check_parser.add_argument("--dataset-root", type=Path, default=None, help="Dataset root directory")
@@ -114,6 +128,29 @@ def main(argv: list[str] | None = None) -> None:
             batch_size=args.batch_size or 128,
             learning_rate=args.learning_rate or 5e-4,
             device=args.device,
+        )
+        metrics = train(config)
+        print(json.dumps(metrics, indent=2))
+        return
+
+    if args.command == "train-text-classifier":
+        from industry_ml_lab.training.text import train
+
+        config = TextTrainConfig(
+            dataset_root=args.dataset_root or Path("data/text"),
+            output_dir=args.output_dir,
+            epochs=args.epochs,
+            batch_size=args.batch_size or 16,
+            learning_rate=args.learning_rate or 2e-5,
+            device=args.device,
+            model_name=args.model_name,
+            dataset_name=args.dataset_name,
+            dataset_config=args.dataset_config or None,
+            text_column=args.text_column,
+            label_column=args.label_column,
+            max_length=args.max_length,
+            train_sample_limit=args.train_sample_limit,
+            val_sample_limit=args.val_sample_limit,
         )
         metrics = train(config)
         print(json.dumps(metrics, indent=2))

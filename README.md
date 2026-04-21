@@ -8,6 +8,7 @@ The lab is structured to map directly onto the capability profile you described:
 
 - Image classification and computer vision with PyTorch
 - Audio classification to build voice and audio intuition
+- Transformer-based text classification for tagging and content understanding
 - Dataset curation and active-learning style relabel queues
 - Embedding-based retrieval with a path to `pgvector`
 - Model serving with REST APIs, batching, artifact management, and health checks
@@ -19,7 +20,7 @@ The lab is structured to map directly onto the capability profile you described:
 The stack is intentionally phased:
 
 - Local development: `uv`, Python package, sample data, pure-Python retrieval and labeling tools
-- Training: PyTorch baselines for vision and audio
+- Training: PyTorch baselines for vision and audio, plus a Hugging Face transformer text classifier
 - Serving: FastAPI inference service for the vision model plus embedding search
 - State: Postgres/pgvector, Valkey, and MinIO via `docker-compose.yml`
 - Orchestration: Temporal worker and workflow stubs for training and promotion flows
@@ -44,6 +45,9 @@ uv run ml-lab active-learning-report --predictions sample-data/predictions.jsonl
 
 # Train vision model (device automatically selected: cuda/mps/cpu)
 uv run ml-lab train-vision --output-dir artifacts/vision-baseline
+
+# Fine-tune a bounded DistilBERT text classifier smoke run
+uv run ml-lab train-text-classifier --output-dir artifacts/text-baseline --train-sample-limit 512 --val-sample-limit 128
 ```
 
 If you want the full API, workflow, vector, and model training flows, run `make sync` to install the full stack.
@@ -55,6 +59,7 @@ The repo is split into extras so the runtime can stay smaller:
 - `dev`: linting and tests
 - `serving`: FastAPI, vision inference, and API runtime
 - `training`: PyTorch, torchvision, and torchaudio for training jobs
+- `transformer`: Hugging Face `transformers` and `datasets` for text classification
 - `vector`: Postgres and `pgvector` clients
 - `workflow`: Temporal client and worker runtime
 
@@ -63,6 +68,7 @@ Examples:
 ```bash
 uv sync --extra dev
 uv sync --extra serving --extra training
+uv sync --extra transformer
 make sync
 ```
 
@@ -74,16 +80,19 @@ Train and fine-tune a ResNet classifier, track metrics, export artifacts, and se
 2. Audio baseline
 Train a keyword-spotting style classifier on Speech Commands to cover audio pipelines and debugging.
 
-3. Active learning
+3. Transformer text classifier
+Fine-tune a DistilBERT-style sequence classifier on GLUE/SST-2 to practice tagging and content understanding.
+
+4. Active learning
 Score model uncertainty and generate a relabel queue from prediction outputs.
 
-4. Retrieval
+5. Retrieval
 Build and query an embedding index locally, then swap the storage layer to Postgres with `pgvector`.
 
-5. Orchestration
+6. Orchestration
 Wrap training and promotion steps in a Temporal workflow.
 
-6. Deployment
+7. Deployment
 Push model and API artifacts to AWS with a cost-aware topology.
 
 ## Recommended Learning Path
@@ -93,9 +102,10 @@ Push model and API artifacts to AWS with a cost-aware topology.
   - Use the checklist to verify target-specific training deps and current device readiness
 - Phase 2: Train the vision model, then wire the API to a real checkpoint
 - Phase 3: Add the audio baseline and uncertainty-driven relabel loop
-- Phase 4: Replace the local retrieval index with Postgres plus `pgvector`
-- Phase 5: Containerize and deploy to AWS EC2 and S3
-- Phase 6: Add a control plane in TypeScript or NestJS if you want direct exposure to the rest of the target stack
+- Phase 4: Add transformer text classification, then connect embeddings to retrieval
+- Phase 5: Replace the local retrieval index with Postgres plus `pgvector`
+- Phase 6: Containerize and deploy to AWS EC2 and S3
+- Phase 7: Add a control plane in TypeScript or NestJS if you want direct exposure to the rest of the target stack
 
 ## Key Documents
 

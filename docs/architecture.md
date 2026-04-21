@@ -32,6 +32,7 @@ It is target-aware:
 
 - `vision` validates the deps and device readiness needed for vision training
 - `audio` validates the deps and device readiness needed for audio training
+- `text` validates the deps and device readiness needed for transformer text classification
 
 Key checks:
 
@@ -44,12 +45,13 @@ Key checks:
 
 On Sunny, the CUDA path matters because free VRAM is the real constraint. The checklist uses `torch.cuda.mem_get_info()` so it does not confuse "GPU exists" with "GPU is actually available for training."
 
-Run with: `ml-lab check --target vision --verbose` or `make check`
+Run with: `ml-lab check --target vision --verbose`, `ml-lab check --target text --verbose`, or `make check`
 
 ### 3. Training
 
 - `src/industry_ml_lab/training/vision.py`
 - `src/industry_ml_lab/training/audio.py`
+- `src/industry_ml_lab/training/text.py`
 
 These cover the hands-on model training portion of the target skill set:
 
@@ -58,6 +60,8 @@ These cover the hands-on model training portion of the target skill set:
 - hyperparameter tuning
 - training and validation loops
 - checkpoint export and metrics persistence
+
+The first transformer path is intentionally a sequence-classification model, not full LLM pretraining. It fine-tunes a DistilBERT-style classifier on GLUE/SST-2 by default, using Hugging Face `transformers` and `datasets` with a native PyTorch loop. That gives a practical content-understanding baseline before moving into embeddings or LoRA-style LLM fine-tuning.
 
 ### 4. Serving
 
@@ -147,7 +151,7 @@ That last point matters. NAT Gateway charges become a fixed tax on a small lab v
 
 This project directly supports the capability definition:
 
-- Classification and content understanding: vision and audio baselines
+- Classification and content understanding: vision, audio, and transformer text-classification baselines
 - PyTorch proficiency: all training code lives in native PyTorch
 - Data curation and labeling: uncertainty scoring and relabel queues
 - Serving and latency thinking: FastAPI entry points and artifact loading

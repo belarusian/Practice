@@ -50,6 +50,7 @@ class TestConstants:
     def test_supported_targets(self) -> None:
         assert "vision" in SUPPORTED_TARGETS
         assert "audio" in SUPPORTED_TARGETS
+        assert "text" in SUPPORTED_TARGETS
 
     def test_default_target(self) -> None:
         assert DEFAULT_TARGET == "vision"
@@ -131,6 +132,7 @@ class TestValidationFunctions:
     def test_validate_target_ok(self) -> None:
         assert _validate_target("vision") == "vision"
         assert _validate_target("audio") == "audio"
+        assert _validate_target("text") == "text"
 
     def test_validate_target_invalid(self) -> None:
         with pytest.raises(ValueError, match="Unsupported training target"):
@@ -206,6 +208,13 @@ class TestCheckTargetDependencies:
         check_names = [r.name for r in results]
         assert "dependency_torch" in check_names
         assert "dependency_torchaudio" in check_names
+
+    def test_text_dependencies_ok(self) -> None:
+        results = check_target_dependencies("text")
+        check_names = [r.name for r in results]
+        assert "dependency_torch" in check_names
+        assert "dependency_transformers" in check_names
+        assert "dependency_datasets" in check_names
 
     def test_vision_missing_torchvision(self) -> None:
         # This would require mocking import torchvision
@@ -331,6 +340,16 @@ class TestRunTrainingChecklist:
         check_names = [c.name for c in checklist.checks]
         assert "dependency_torchaudio" in check_names
 
+    def test_checklist_text_target(self, tmp_path: Path) -> None:
+        checklist = run_training_checklist(
+            target="text",
+            output_dir=tmp_path,
+        )
+        assert checklist.target == "text"
+        check_names = [c.name for c in checklist.checks]
+        assert "dependency_transformers" in check_names
+        assert "dependency_datasets" in check_names
+
 
 class TestFormatChecklist:
     """Tests for format_checklist."""
@@ -440,6 +459,29 @@ class TestIntegration:
         output = format_checklist(checklist, verbose=False)
         assert "Target: audio" in output
         assert "Device: cpu" in output
+
+    def test_lite_environment_is_not_ready_for_text_training(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        dataset_root = tmp_path / "data" / "text"
+        dataset_root.mkdir(parents=True)
+
+        monkeypatch.setattr(checklist_module, "_has_module", lambda name: False)
+
+        result = run_training_checklist(
+            target="text",
+            device="cpu",
+            output_dir=tmp_path / "artifacts" / "text",
+            dataset_root=dataset_root,
+        )
+
+        assert not result.is_ready
+        assert result.resolved_device == "cpu"
+        assert {item.name for item in result.checks if item.status == "error"} == {
+            "dependency_torch",
+            "dependency_transformers",
+            "dependency_datasets",
+        }
 
     def test_lite_environment_is_not_ready_for_vision_training(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
