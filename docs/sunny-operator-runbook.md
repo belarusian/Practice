@@ -15,7 +15,7 @@ Use this document for day-to-day operation. Use [Handoff Guide](docs/handoff-gui
 ## What Is Proven Right Now
 
 - Sunny WSL2 is the control and ops layer
-- Sunny Windows Python `3.11` is the current proven CUDA training path for both `vision` and bounded `audio` smoke runs
+- Sunny Windows Python `3.11` is the current proven CUDA training path for `vision`, bounded `audio`, and bounded transformer `text` smoke runs
 - Sunny WSL2 is **not** currently training-ready
 
 Do not treat WSL2 as the active training runtime unless someone explicitly upgrades and re-proves it.
@@ -171,8 +171,10 @@ Do **not** use `pytest` on Sunny WSL2 as the authoritative answer to "can Sunny 
 For Sunny host validation, use:
 
 - `make sunny-proof` to prove the real remote runtime and pull back a report
+- `make sunny-proof-text` to prove Windows text-transformer dependencies without running a full smoke train
 - `make sunny-vision-smoke` to run the repo-owned Windows CUDA vision smoke train
 - `make sunny-audio-smoke` to run the repo-owned bounded Windows CUDA audio smoke train
+- `make sunny-text-smoke` to run the repo-owned bounded Windows CUDA transformer text-classifier smoke train
 
 If you are already logged into Sunny WSL2, the direct host-side commands are:
 
@@ -181,6 +183,7 @@ cd /home/sasha/Practice
 bash ops/sunny/prove-training-runtime.sh --with-training-mode --restore-demo
 bash ops/sunny/vision-smoke.sh
 bash ops/sunny/audio-smoke.sh
+bash ops/sunny/text-smoke.sh
 ```
 
 Today, the authoritative training signal is the Windows `py -3.11` path inside those reports, not `pytest` in WSL2.
@@ -227,14 +230,14 @@ Be precise here:
 - the repo-owned Windows `vision` smoke path is now proven
 - the authoritative Sunny training path is Windows Python `3.11` plus CUDA
 - Sunny WSL2 remains the control and ops layer, not the proven training runtime
-- there is still **not yet** a standardized Windows environment bootstrap documented as fully generic beyond the current proven path
+- there is still **not yet** a standardized Windows environment bootstrap documented as fully generic beyond the current proven vision/audio path
 
 So when someone asks “how do I build on Sunny?”, the honest answer today is:
 
 - sync the repo
 - use Windows Python `3.11`
 - run the repo via `PYTHONPATH` from the Windows view of the WSL checkout
-- use `make sunny-proof`, `make sunny-vision-smoke`, and `make sunny-audio-smoke` as the operator checks
+- use `make sunny-proof`, `make sunny-vision-smoke`, `make sunny-audio-smoke`, and, after dependency proof, `make sunny-text-smoke` as the operator checks
 
 Do **not** tell people that WSL `uv sync`, `pytest`, or `make test` are the active training proof path. That is false today.
 
@@ -309,6 +312,37 @@ Current smoke settings are intentionally bounded for operator speed, not benchma
 
 - `train_sample_limit = 1024`
 - `val_sample_limit = 256`
+
+## Proven Transformer Text Smoke Path
+
+The repo-owned Windows transformer text smoke train is now proven on Sunny as a bounded smoke workload.
+
+Preferred from another machine:
+
+```bash
+cd /path/to/Practice
+make sunny-text-smoke
+```
+
+Directly from Sunny WSL2:
+
+```bash
+cd /home/sasha/Practice
+bash ops/sunny/text-smoke.sh
+```
+
+Expected result:
+
+- one bounded GLUE/SST-2 DistilBERT fine-tune completes on the 4090
+- the report directory contains `text-artifacts/metrics.json` and a Hugging Face `text-artifacts/model/` directory
+- the nested Windows text smoke summary is green
+- Hugging Face dataset and model caches are placed under Windows-local `%LOCALAPPDATA%\industry-ml-lab\...` paths
+- `restore-demo` may still hit a wall-clock timeout, but the run is treated as successful when `audit-after-restore` passes
+
+Current smoke settings are intentionally bounded for operator speed, not benchmark realism:
+
+- `train_sample_limit = 512`
+- `val_sample_limit = 128`
 
 ## What To Hand Back After Any Change
 

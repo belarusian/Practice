@@ -64,17 +64,31 @@ These scripts turn the current Sunny demo stack into repo-backed operational sta
   - Runs from another machine such as this laptop.
   - Syncs the repo to Sunny, runs `audio-smoke.sh`, pulls the report back locally.
 
+- `text-smoke.sh`
+  - Runs from Sunny WSL2.
+  - Same orchestration as `vision-smoke.sh`, but invokes Windows **`text`** check and `train-text-classifier` on GLUE/SST-2.
+  - Uses bounded sample limits by default so the smoke proves the transformer path without becoming a full benchmark.
+
+- `text-smoke.ps1`
+  - Runs on Windows through the WSL2 wrapper.
+  - `ml-lab check --target text`, then one-epoch DistilBERT sequence-classifier training via the same probe pattern as vision/audio.
+  - If the dataset cache path is a **`\\wsl…` UNC**, the script uses a Windows-local cache under `%LOCALAPPDATA%\industry-ml-lab\text-smoke-datasets`; Hugging Face model cache is placed under `%LOCALAPPDATA%\industry-ml-lab\hf-cache`.
+
+- `run-remote-text-smoke.sh`
+  - Runs from another machine such as this laptop.
+  - Syncs the repo to Sunny, runs `text-smoke.sh`, pulls the report back locally.
+
 ## Remote wrappers and exit codes
 
-`run-remote-training-proof.sh`, `run-remote-vision-smoke.sh`, and `run-remote-audio-smoke.sh` use **`set -o pipefail`** so a failed remote `ssh` session is not masked by `tee`.
+`run-remote-training-proof.sh`, `run-remote-vision-smoke.sh`, `run-remote-audio-smoke.sh`, and `run-remote-text-smoke.sh` use **`set -o pipefail`** so a failed remote `ssh` session is not masked by `tee`.
 
-After rsync pulls `artifacts/sunny-reports/<stamp>/`, they run **`exit_from_summary_json.py`** on **`summary.json`**. The process exits **0** only when both the **SSH** step and **`all_commands_succeeded`** in the report are good—suitable for **CI** or **`make sunny-proof` / `make sunny-vision-smoke` / `make sunny-audio-smoke`** as hard gates.
+After rsync pulls `artifacts/sunny-reports/<stamp>/`, they run **`exit_from_summary_json.py`** on **`summary.json`**. The process exits **0** only when both the **SSH** step and **`all_commands_succeeded`** in the report are good—suitable for **CI** or **`make sunny-proof` / `make sunny-vision-smoke` / `make sunny-audio-smoke` / `make sunny-text-smoke`** as hard gates.
 
-`audio-smoke.ps1` and `vision-smoke.ps1` **`exit 1`** when any nested Windows step fails (not only when the script throws). **`summarize_report_status.py`** also forces overall failure if **`windows-*-smoke-summary.json`** in the report directory has **`all_commands_succeeded`: false**, so a stale green **`windows-*-smoke-console`** line cannot mask a red nested summary.
+`audio-smoke.ps1`, `vision-smoke.ps1`, and `text-smoke.ps1` **`exit 1`** when any nested Windows step fails (not only when the script throws). **`summarize_report_status.py`** also forces overall failure if **`windows-*-smoke-summary.json`** in the report directory has **`all_commands_succeeded`: false**, so a stale green **`windows-*-smoke-console`** line cannot mask a red nested summary.
 
-## Training target: `vision` vs `audio`
+## Training target: `vision`, `audio`, and `text`
 
-`prove-training-runtime.sh` and `run-remote-training-proof.sh` accept **`--target vision`** (default) or **`--target audio`**. The Windows path runs `ml-lab check --target …` so **`torchaudio`** is required for **`audio`** to go green.
+`prove-training-runtime.sh` and `run-remote-training-proof.sh` accept **`--target vision`** (default), **`--target audio`**, or **`--target text`**. The Windows path runs `ml-lab check --target …`, so **`torchaudio`** is required for **`audio`** and **`transformers`** plus **`datasets`** are required for **`text`**.
 
 Before adding audio smoke, prove the Windows runtime on Sunny (PowerShell on the box or via WSL):
 
@@ -98,6 +112,15 @@ bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo 
 
 Proof-mode summary (**`--proof`**) still treats expected WSL red as non-gating; the Windows **`ml-lab check`** line is what must pass for **`audio`**.
 
+For transformer text classification, use the dedicated smoke path after the Windows dependencies are present:
+
+```bash
+make sunny-proof-text
+make sunny-text-smoke
+```
+
+The validated text smoke uses GLUE/SST-2, `distilbert/distilbert-base-uncased`, `train_sample_limit=512`, and `val_sample_limit=128`.
+
 ## Usage
 
 Operator login and day-to-day access details now live in:
@@ -115,6 +138,7 @@ bash ops/sunny/training-mode.sh --restore-demo
 bash ops/sunny/prove-training-runtime.sh --with-training-mode --restore-demo
 bash ops/sunny/vision-smoke.sh
 bash ops/sunny/audio-smoke.sh
+bash ops/sunny/text-smoke.sh
 ```
 
 From another machine:
@@ -124,6 +148,7 @@ bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo
 bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo --target audio
 bash ops/sunny/run-remote-vision-smoke.sh
 bash ops/sunny/run-remote-audio-smoke.sh
+bash ops/sunny/run-remote-text-smoke.sh
 ```
 
 If you want to run the Windows portion directly:
@@ -175,6 +200,8 @@ Likewise, running `pytest` inside Sunny WSL2 is not the authoritative answer for
 
 - `run-remote-training-proof.sh` / `prove-training-runtime.sh`
 - `run-remote-vision-smoke.sh` / `vision-smoke.sh`
+- `run-remote-audio-smoke.sh` / `audio-smoke.sh`
+- `run-remote-text-smoke.sh` / `text-smoke.sh`
 
 The proof scripts exist to answer, from the actual host:
 
