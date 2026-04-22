@@ -67,7 +67,9 @@ Introduce embeddings and nearest-neighbor retrieval.
 
 Tasks:
 
-- swap in CLIP or another encoder
+- build a transformer text embedding index from JSONL records
+- query the index with natural-language prompts
+- swap in CLIP or another multimodal encoder
 - embed image or audio metadata
 - replace the local JSON index with Postgres plus `pgvector`
 - evaluate search quality with hand-built queries

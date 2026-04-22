@@ -15,7 +15,7 @@ Use this document for day-to-day operation. Use [Handoff Guide](docs/handoff-gui
 ## What Is Proven Right Now
 
 - Sunny WSL2 is the control and ops layer
-- Sunny Windows Python `3.11` is the current proven CUDA training path for `vision`, bounded `audio`, and bounded transformer `text` smoke runs
+- Sunny Windows Python `3.11` is the current proven CUDA runtime for `vision`, bounded `audio`, bounded transformer `text`, and transformer `embedding` smoke runs
 - Sunny WSL2 is **not** currently training-ready
 
 Do not treat WSL2 as the active training runtime unless someone explicitly upgrades and re-proves it.
@@ -180,6 +180,7 @@ For Sunny host validation, use:
 - `make sunny-vision-smoke` to run the repo-owned Windows CUDA vision smoke train
 - `make sunny-audio-smoke` to run the repo-owned bounded Windows CUDA audio smoke train
 - `make sunny-text-smoke` to run the repo-owned bounded Windows CUDA transformer text-classifier smoke train
+- `make sunny-embedding-smoke` to run the repo-owned Windows CUDA transformer text-embedding retrieval smoke
 
 If you are already logged into Sunny WSL2, the direct host-side commands are:
 
@@ -189,9 +190,10 @@ bash ops/sunny/prove-training-runtime.sh --with-training-mode --restore-demo
 bash ops/sunny/vision-smoke.sh
 bash ops/sunny/audio-smoke.sh
 bash ops/sunny/text-smoke.sh
+bash ops/sunny/embedding-smoke.sh
 ```
 
-Today, the authoritative training signal is the Windows `py -3.11` path inside those reports, not `pytest` in WSL2.
+Today, the authoritative training and embedding-runtime signal is the Windows `py -3.11` path inside those reports, not `pytest` in WSL2.
 
 ## Running The Proven Windows Path
 
@@ -235,14 +237,14 @@ Be precise here:
 - the repo-owned Windows `vision` smoke path is now proven
 - the authoritative Sunny training path is Windows Python `3.11` plus CUDA
 - Sunny WSL2 remains the control and ops layer, not the proven training runtime
-- there is still **not yet** a standardized Windows environment bootstrap documented as fully generic beyond the current proven vision/audio path
+- there is still **not yet** a standardized Windows environment bootstrap documented as fully generic beyond the current proven vision, audio, text, and embedding paths
 
 So when someone asks “how do I build on Sunny?”, the honest answer today is:
 
 - sync the repo
 - use Windows Python `3.11`
 - run the repo via `PYTHONPATH` from the Windows view of the WSL checkout
-- use `make sunny-proof`, `make sunny-vision-smoke`, `make sunny-audio-smoke`, and, after dependency proof, `make sunny-text-smoke` as the operator checks
+- use `make sunny-proof`, `make sunny-vision-smoke`, `make sunny-audio-smoke`, `make sunny-text-smoke`, and `make sunny-embedding-smoke` as the operator checks
 
 Do **not** tell people that WSL `uv sync`, `pytest`, or `make test` are the active training proof path. That is false today.
 
@@ -348,6 +350,35 @@ Current smoke settings are intentionally bounded for operator speed, not benchma
 
 - `train_sample_limit = 512`
 - `val_sample_limit = 128`
+
+## Proven Transformer Embedding Smoke Path
+
+The repo-owned Windows transformer embedding smoke is now proven on Sunny.
+
+Preferred from another machine:
+
+```bash
+cd /path/to/Practice
+make sunny-embedding-smoke
+```
+
+Directly from Sunny WSL2:
+
+```bash
+cd "${SUNNY_REPO_DIR:-/home/ml-lab/Practice}"
+bash ops/sunny/embedding-smoke.sh
+```
+
+Expected result:
+
+- `ml-lab build-text-index` builds a JSON vector index from `sample-data/text-records.jsonl`
+- `ml-lab search-text-index` runs a natural-language query against the generated index
+- the report directory contains `embedding-artifacts/text-index.json`
+- the nested Windows embedding smoke summary is green
+- Hugging Face model cache is placed under Windows-local `%LOCALAPPDATA%\industry-ml-lab\hf-cache`
+- `restore-demo` may still hit a wall-clock timeout, but the run is treated as successful when `audit-after-restore` passes
+
+The validated run on **2026-04-22** used `sentence-transformers/all-MiniLM-L6-v2`, generated `384`-dimensional vectors for `5` records, and ranked `gpu-training` first for the query `free CUDA memory for training`.
 
 ## What To Hand Back After Any Change
 

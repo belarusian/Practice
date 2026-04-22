@@ -9,6 +9,7 @@ The lab is structured around production-oriented ML capabilities:
 - Image classification and computer vision with PyTorch
 - Audio classification to build voice and audio intuition
 - Transformer-based text classification for tagging and content understanding
+- Transformer-based text embeddings for semantic search
 - Dataset curation and active-learning style relabel queues
 - Embedding-based retrieval with a path to `pgvector`
 - Model serving with REST APIs, batching, artifact management, and health checks
@@ -34,11 +35,17 @@ This is not optimized for maximum abstraction. It is optimized for learning the 
 # Check vision-training readiness before training
 uv run ml-lab check --target vision --verbose
 
-# Build a local embedding index
+# Build a local embedding index from precomputed vectors
 uv run ml-lab build-index --records sample-data/embedding-records.jsonl --output artifacts/demo-index.json
 
 # Search the index
 uv run ml-lab search-index --index-path artifacts/demo-index.json --vector 0.92,0.08,0.04
+
+# Build a transformer text embedding index
+uv run ml-lab build-text-index --records sample-data/text-records.jsonl --output artifacts/text-index.json
+
+# Search with a natural-language query
+uv run ml-lab search-text-index --index-path artifacts/text-index.json --query "free CUDA memory for training"
 
 # Generate an active learning relabel queue
 uv run ml-lab active-learning-report --predictions sample-data/predictions.jsonl --output artifacts/relabel-queue.csv
@@ -50,6 +57,8 @@ uv run ml-lab train-vision --output-dir artifacts/vision-baseline
 uv run ml-lab train-text-classifier --output-dir artifacts/text-baseline --train-sample-limit 512 --val-sample-limit 128
 ```
 
+The transformer text commands require the `transformer` dependency profile.
+
 To install the full API, workflow, vector, and model training stack, run `make sync`.
 
 ## Dependency Profiles
@@ -59,7 +68,7 @@ The repo is split into extras so the runtime can stay smaller:
 - `dev`: linting and tests
 - `serving`: FastAPI, vision inference, and API runtime
 - `training`: PyTorch, torchvision, and torchaudio for training jobs
-- `transformer`: Hugging Face `transformers` and `datasets` for text classification
+- `transformer`: Hugging Face `transformers` and `datasets` for text classification and text embeddings
 - `vector`: Postgres and `pgvector` clients
 - `workflow`: Temporal client and worker runtime
 
@@ -87,7 +96,7 @@ Fine-tune a DistilBERT-style sequence classifier on GLUE/SST-2 to practice taggi
 Score model uncertainty and generate a relabel queue from prediction outputs.
 
 5. Retrieval
-Build and query an embedding index locally, then swap the storage layer to Postgres with `pgvector`.
+Build and query an embedding index locally from either precomputed vectors or transformer text embeddings, then swap the storage layer to Postgres with `pgvector`.
 
 6. Orchestration
 Wrap training and promotion steps in a Temporal workflow.
@@ -102,7 +111,7 @@ Push model and API artifacts to AWS with a cost-aware topology.
   - Use the checklist to verify target-specific training deps and current device readiness
 - Phase 2: Train the vision model, then wire the API to a real checkpoint
 - Phase 3: Add the audio baseline and uncertainty-driven relabel loop
-- Phase 4: Add transformer text classification, then connect embeddings to retrieval
+- Phase 4: Add transformer text classification, then build transformer text embeddings for retrieval
 - Phase 5: Replace the local retrieval index with Postgres plus `pgvector`
 - Phase 6: Containerize and deploy to AWS EC2 and S3
 - Phase 7: Add a control plane in TypeScript or NestJS for full-stack model operations practice
@@ -139,12 +148,13 @@ On Sunny, use:
 - `bash ops/sunny/prove-training-runtime.sh --with-training-mode --restore-demo` to produce a host-local report of WSL and Windows training readiness
 - `bash ops/sunny/vision-smoke.sh` to run the repo-owned Windows vision smoke training flow from Sunny WSL2
 - `bash ops/sunny/text-smoke.sh` to run the repo-owned Windows transformer text-classifier smoke flow from Sunny WSL2
+- `bash ops/sunny/embedding-smoke.sh` to run the repo-owned Windows transformer text-embedding retrieval smoke flow from Sunny WSL2
 
 This mode split has already been validated on Sunny: the live demo stack used about `23.7 GiB` to `23.9 GiB` of 4090 VRAM, `training-mode.sh` reduced that to about `1.1 GiB` used with `23.5 GiB` free, and restore returned the demo services to healthy status.
 
 From a separate machine, use `bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo` to sync the repo to Sunny, run the proof there, and pull the report back under `artifacts/sunny-reports/`.
 
-For the current repo-owned Windows training smoke loops from another machine, use `bash ops/sunny/run-remote-vision-smoke.sh`, `bash ops/sunny/run-remote-audio-smoke.sh`, or `bash ops/sunny/run-remote-text-smoke.sh`.
+For the current repo-owned Windows smoke loops from another machine, use `bash ops/sunny/run-remote-vision-smoke.sh`, `bash ops/sunny/run-remote-audio-smoke.sh`, `bash ops/sunny/run-remote-text-smoke.sh`, or `bash ops/sunny/run-remote-embedding-smoke.sh`.
 
 Current proven state on Sunny:
 

@@ -1,6 +1,6 @@
 PYTHON := uv run
 
-.PHONY: sync sync-lite lint format test check training-mode sunny-proof sunny-proof-audio sunny-proof-text sunny-vision-smoke sunny-audio-smoke sunny-text-smoke train-vision train-audio train-text-classifier serve build-index search-index active-learning-report aws-bootstrap aws-budget aws-upload-artifacts aws-launch-trainer aws-build-and-push-api aws-launch-api
+.PHONY: sync sync-lite lint format test check training-mode sunny-proof sunny-proof-audio sunny-proof-text sunny-vision-smoke sunny-audio-smoke sunny-text-smoke sunny-embedding-smoke train-vision train-audio train-text-classifier serve build-index search-index build-text-index search-text-index active-learning-report aws-bootstrap aws-budget aws-upload-artifacts aws-launch-trainer aws-build-and-push-api aws-launch-api
 
 sync:
 	uv sync --extra dev --extra serving --extra training --extra transformer --extra vector --extra workflow
@@ -41,6 +41,9 @@ sunny-audio-smoke:
 sunny-text-smoke:
 	bash ops/sunny/run-remote-text-smoke.sh
 
+sunny-embedding-smoke:
+	bash ops/sunny/run-remote-embedding-smoke.sh
+
 train-vision:
 	$(PYTHON) ml-lab train-vision --epochs 1 --output-dir artifacts/vision-baseline
 
@@ -58,6 +61,12 @@ build-index:
 
 search-index:
 	$(PYTHON) ml-lab search-index --index-path artifacts/demo-index.json --vector 0.92,0.08,0.04
+
+build-text-index:
+	$(PYTHON) ml-lab build-text-index --records sample-data/text-records.jsonl --output artifacts/text-index.json
+
+search-text-index:
+	$(PYTHON) ml-lab search-text-index --index-path artifacts/text-index.json --query "free CUDA memory for training" --top-k 3
 
 active-learning-report:
 	$(PYTHON) ml-lab active-learning-report --predictions sample-data/predictions.jsonl --output artifacts/relabel-queue.csv

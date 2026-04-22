@@ -1,0 +1,5 @@
+{"id":"gpu-training","text":"Sunny training mode frees the RTX 4090 so CUDA jobs have enough VRAM.","metadata":{"topic":"training","machine":"sunny"}}
+{"id":"audio-smoke","text":"The audio smoke test trains a bounded Speech Commands classifier through Windows Python.","metadata":{"topic":"audio","machine":"sunny"}}
+{"id":"semantic-search","text":"Transformer embeddings turn text records into vectors for semantic search and duplicate detection.","metadata":{"topic":"retrieval"}}
+{"id":"active-learning","text":"Uncertainty scoring produces relabel queues for samples that need human annotation.","metadata":{"topic":"labeling"}}
+{"id":"model-serving","text":"FastAPI serving exposes health checks, model metadata, and prediction endpoints.","metadata":{"topic":"serving"}}
