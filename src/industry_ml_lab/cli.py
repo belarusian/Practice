@@ -24,11 +24,15 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    vision_parser = subparsers.add_parser("train-vision", help="Train the image classification baseline.")
+    vision_parser = subparsers.add_parser(
+        "train-vision", help="Train the image classification baseline."
+    )
     _add_common_training_args(vision_parser)
     vision_parser.add_argument("--pretrained", action=argparse.BooleanOptionalAction, default=True)
 
-    audio_parser = subparsers.add_parser("train-audio", help="Train the audio classification baseline.")
+    audio_parser = subparsers.add_parser(
+        "train-audio", help="Train the audio classification baseline."
+    )
     _add_common_training_args(audio_parser)
 
     text_parser = subparsers.add_parser(
@@ -64,6 +68,35 @@ def _build_parser() -> argparse.ArgumentParser:
     search_index_parser.add_argument("--vector", type=str, required=True)
     search_index_parser.add_argument("--top-k", type=int, default=5)
 
+    build_text_index_parser = subparsers.add_parser(
+        "build-text-index",
+        help="Build a transformer text embedding index from JSONL records.",
+    )
+    build_text_index_parser.add_argument("--records", type=Path, required=True)
+    build_text_index_parser.add_argument("--output", type=Path, required=True)
+    build_text_index_parser.add_argument(
+        "--model-name",
+        default="sentence-transformers/all-MiniLM-L6-v2",
+    )
+    build_text_index_parser.add_argument("--batch-size", type=int, default=32)
+    build_text_index_parser.add_argument("--max-length", type=int, default=256)
+    build_text_index_parser.add_argument("--device", choices=("cpu", "cuda", "mps"), default=None)
+
+    search_text_index_parser = subparsers.add_parser(
+        "search-text-index",
+        help="Query a transformer text embedding index with a natural-language query.",
+    )
+    search_text_index_parser.add_argument("--index-path", type=Path, required=True)
+    search_text_index_parser.add_argument("--query", type=str, required=True)
+    search_text_index_parser.add_argument("--top-k", type=int, default=5)
+    search_text_index_parser.add_argument(
+        "--model-name",
+        default="sentence-transformers/all-MiniLM-L6-v2",
+    )
+    search_text_index_parser.add_argument("--batch-size", type=int, default=32)
+    search_text_index_parser.add_argument("--max-length", type=int, default=256)
+    search_text_index_parser.add_argument("--device", choices=("cpu", "cuda", "mps"), default=None)
+
     al_parser = subparsers.add_parser(
         "active-learning-report",
         help="Generate a relabel queue from model prediction outputs.",
@@ -84,8 +117,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     check_parser.add_argument("--target", choices=("vision", "audio", "text"), default="vision")
     check_parser.add_argument("--device", choices=("cpu", "cuda", "mps"), default=None)
-    check_parser.add_argument("--output-dir", type=Path, default=None, help="Output directory for artifacts")
-    check_parser.add_argument("--dataset-root", type=Path, default=None, help="Dataset root directory")
+    check_parser.add_argument(
+        "--output-dir", type=Path, default=None, help="Output directory for artifacts"
+    )
+    check_parser.add_argument(
+        "--dataset-root", type=Path, default=None, help="Dataset root directory"
+    )
     check_parser.add_argument("--verbose", action="store_true", help="Show details for all checks")
     check_parser.add_argument("--json", action="store_true", help="Output as JSON")
 
@@ -177,6 +214,35 @@ def main(argv: list[str] | None = None) -> None:
         print(json.dumps(results, indent=2))
         return
 
+    if args.command == "build-text-index":
+        from industry_ml_lab.retrieval.text_embeddings import build_text_index
+
+        build_text_index(
+            args.records,
+            args.output,
+            model_name=args.model_name,
+            batch_size=args.batch_size,
+            device=args.device,
+            max_length=args.max_length,
+        )
+        print(args.output)
+        return
+
+    if args.command == "search-text-index":
+        from industry_ml_lab.retrieval.text_embeddings import search_text_index
+
+        results = search_text_index(
+            args.index_path,
+            args.query,
+            top_k=args.top_k,
+            model_name=args.model_name,
+            batch_size=args.batch_size,
+            device=args.device,
+            max_length=args.max_length,
+        )
+        print(json.dumps(results, indent=2))
+        return
+
     if args.command == "active-learning-report":
         from industry_ml_lab.active_learning.scoring import write_relabel_queue
 
@@ -201,16 +267,24 @@ def main(argv: list[str] | None = None) -> None:
         )
 
         if args.json:
-            output = json.dumps({
-                "target": checklist.target,
-                "resolved_device": checklist.resolved_device,
-                "is_ready": checklist.is_ready,
-                "has_warnings": checklist.has_warnings,
-                "checks": [
-                    {"name": c.name, "status": c.status, "message": c.message, "details": c.details}
-                    for c in checklist.checks
-                ],
-            }, indent=2)
+            output = json.dumps(
+                {
+                    "target": checklist.target,
+                    "resolved_device": checklist.resolved_device,
+                    "is_ready": checklist.is_ready,
+                    "has_warnings": checklist.has_warnings,
+                    "checks": [
+                        {
+                            "name": c.name,
+                            "status": c.status,
+                            "message": c.message,
+                            "details": c.details,
+                        }
+                        for c in checklist.checks
+                    ],
+                },
+                indent=2,
+            )
             print(output)
         else:
             print(format_checklist(checklist, verbose=args.verbose))

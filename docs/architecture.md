@@ -85,10 +85,16 @@ This is the first step toward a real labeling pipeline. The current implementati
 ### 6. Retrieval
 
 - `src/industry_ml_lab/retrieval/simple_index.py`
+- `src/industry_ml_lab/retrieval/text_embeddings.py`
 
-The repo starts with a local JSON-based cosine-similarity index because it is easy to inspect and debug. The intended upgrade path is:
+The repo starts with a local JSON-based cosine-similarity index because it is easy to inspect and debug. It now has two paths:
 
-1. replace local embeddings with CLIP or another encoder
+- `build-index` / `search-index` use precomputed vectors for deterministic local tests
+- `build-text-index` / `search-text-index` use a Hugging Face encoder transformer with mean pooling to generate text embeddings
+
+The intended upgrade path is:
+
+1. add CLIP or another multimodal encoder for image and audio metadata
 2. store vectors in Postgres using `pgvector`
 3. expose search through the API
 4. add offline evaluation for recall and quality
@@ -155,7 +161,7 @@ This project directly supports the capability definition:
 - PyTorch proficiency: all training code lives in native PyTorch
 - Data curation and labeling: uncertainty scoring and relabel queues
 - Serving and latency thinking: FastAPI entry points and artifact loading
-- Embedding retrieval: local index with a path to `pgvector`
+- Embedding retrieval: local index, transformer text embeddings, and a path to `pgvector`
 - Workflow systems: Temporal stubs and worker patterns
 - Cloud deployment: EC2, S3, ECR, and cost-aware operations
 

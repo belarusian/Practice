@@ -78,11 +78,25 @@ These scripts turn the current Sunny demo stack into repo-backed operational sta
   - Runs from another machine such as this laptop.
   - Syncs the repo to Sunny, runs `text-smoke.sh`, pulls the report back locally.
 
+- `embedding-smoke.sh`
+  - Runs from Sunny WSL2.
+  - Same orchestration as `text-smoke.sh`, but invokes Windows transformer text-embedding build/search instead of classifier training.
+  - Builds an index from `sample-data/text-records.jsonl` and searches it with a natural-language query.
+
+- `embedding-smoke.ps1`
+  - Runs on Windows through the WSL2 wrapper.
+  - Uses `py -3.11` to run `ml-lab build-text-index` and `ml-lab search-text-index`.
+  - Hugging Face model cache is placed under `%LOCALAPPDATA%\industry-ml-lab\hf-cache`.
+
+- `run-remote-embedding-smoke.sh`
+  - Runs from another machine such as this laptop.
+  - Syncs the repo to Sunny, runs `embedding-smoke.sh`, pulls the report back locally.
+
 ## Remote wrappers and exit codes
 
-`run-remote-training-proof.sh`, `run-remote-vision-smoke.sh`, `run-remote-audio-smoke.sh`, and `run-remote-text-smoke.sh` use **`set -o pipefail`** so a failed remote `ssh` session is not masked by `tee`.
+`run-remote-training-proof.sh`, `run-remote-vision-smoke.sh`, `run-remote-audio-smoke.sh`, `run-remote-text-smoke.sh`, and `run-remote-embedding-smoke.sh` use **`set -o pipefail`** so a failed remote `ssh` session is not masked by `tee`.
 
-After rsync pulls `artifacts/sunny-reports/<stamp>/`, they run **`exit_from_summary_json.py`** on **`summary.json`**. The process exits **0** only when both the **SSH** step and **`all_commands_succeeded`** in the report are good—suitable for **CI** or **`make sunny-proof` / `make sunny-vision-smoke` / `make sunny-audio-smoke` / `make sunny-text-smoke`** as hard gates.
+After rsync pulls `artifacts/sunny-reports/<stamp>/`, they run **`exit_from_summary_json.py`** on **`summary.json`**. The process exits **0** only when both the **SSH** step and **`all_commands_succeeded`** in the report are good—suitable for **CI** or **`make sunny-proof` / `make sunny-vision-smoke` / `make sunny-audio-smoke` / `make sunny-text-smoke` / `make sunny-embedding-smoke`** as hard gates.
 
 `audio-smoke.ps1`, `vision-smoke.ps1`, and `text-smoke.ps1` **`exit 1`** when any nested Windows step fails (not only when the script throws). **`summarize_report_status.py`** also forces overall failure if **`windows-*-smoke-summary.json`** in the report directory has **`all_commands_succeeded`: false**, so a stale green **`windows-*-smoke-console`** line cannot mask a red nested summary.
 
@@ -139,6 +153,7 @@ bash ops/sunny/prove-training-runtime.sh --with-training-mode --restore-demo
 bash ops/sunny/vision-smoke.sh
 bash ops/sunny/audio-smoke.sh
 bash ops/sunny/text-smoke.sh
+bash ops/sunny/embedding-smoke.sh
 ```
 
 From another machine:
@@ -149,6 +164,7 @@ bash ops/sunny/run-remote-training-proof.sh --with-training-mode --restore-demo 
 bash ops/sunny/run-remote-vision-smoke.sh
 bash ops/sunny/run-remote-audio-smoke.sh
 bash ops/sunny/run-remote-text-smoke.sh
+bash ops/sunny/run-remote-embedding-smoke.sh
 ```
 
 If you want to run the Windows portion directly:
@@ -204,6 +220,7 @@ Likewise, running `pytest` inside Sunny WSL2 is not the authoritative answer for
 - `run-remote-vision-smoke.sh` / `vision-smoke.sh`
 - `run-remote-audio-smoke.sh` / `audio-smoke.sh`
 - `run-remote-text-smoke.sh` / `text-smoke.sh`
+- `run-remote-embedding-smoke.sh` / `embedding-smoke.sh`
 
 The proof scripts exist to answer, from the actual host:
 

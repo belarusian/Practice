@@ -24,7 +24,9 @@ def test_parse_vector_rejects_invalid_value() -> None:
         cli._parse_vector("0.9,not-a-number")
 
 
-def test_build_index_command_writes_output(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_build_index_command_writes_output(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     records_path = tmp_path / "records.jsonl"
     output_path = tmp_path / "index.json"
     _write_jsonl(
@@ -57,10 +59,92 @@ def test_search_index_command_prints_ranked_matches(
     cli.main(["build-index", "--records", str(records_path), "--output", str(index_path)])
     capsys.readouterr()
 
-    cli.main(["search-index", "--index-path", str(index_path), "--vector", "0.9,0.1", "--top-k", "1"])
+    cli.main(
+        ["search-index", "--index-path", str(index_path), "--vector", "0.9,0.1", "--top-k", "1"]
+    )
 
     payload = json.loads(capsys.readouterr().out)
     assert payload[0]["item_id"] == "cat"
+
+
+def test_build_text_index_command_writes_output_with_fake_embedder(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from industry_ml_lab.retrieval import text_embeddings
+
+    class FakeEmbedder:
+        model_name = "fake-cli-encoder"
+
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            pass
+
+        def embed_texts(self, texts: list[str]) -> list[list[float]]:
+            return [[1.0, 0.0] if "gpu" in text.lower() else [0.0, 1.0] for text in texts]
+
+    monkeypatch.setattr(text_embeddings, "TransformerTextEmbedder", FakeEmbedder)
+
+    records_path = tmp_path / "text-records.jsonl"
+    output_path = tmp_path / "text-index.json"
+    _write_jsonl(
+        records_path,
+        [
+            {"id": "gpu", "text": "GPU training uses CUDA."},
+            {"id": "audio", "text": "Audio training uses waveforms."},
+        ],
+    )
+
+    cli.main(["build-text-index", "--records", str(records_path), "--output", str(output_path)])
+
+    captured = capsys.readouterr()
+    assert captured.out.strip() == str(output_path)
+    assert output_path.exists()
+
+
+def test_search_text_index_command_prints_ranked_matches_with_fake_embedder(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from industry_ml_lab.retrieval import text_embeddings
+
+    class FakeEmbedder:
+        model_name = "fake-cli-encoder"
+
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            pass
+
+        def embed_texts(self, texts: list[str]) -> list[list[float]]:
+            return [
+                [1.0, 0.0] if "gpu" in text.lower() or "cuda" in text.lower() else [0.0, 1.0]
+                for text in texts
+            ]
+
+    monkeypatch.setattr(text_embeddings, "TransformerTextEmbedder", FakeEmbedder)
+
+    records_path = tmp_path / "text-records.jsonl"
+    index_path = tmp_path / "text-index.json"
+    _write_jsonl(
+        records_path,
+        [
+            {"id": "gpu", "text": "GPU training uses CUDA."},
+            {"id": "audio", "text": "Audio training uses waveforms."},
+        ],
+    )
+    cli.main(["build-text-index", "--records", str(records_path), "--output", str(index_path)])
+    capsys.readouterr()
+
+    cli.main(
+        [
+            "search-text-index",
+            "--index-path",
+            str(index_path),
+            "--query",
+            "CUDA memory",
+            "--top-k",
+            "1",
+        ]
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload[0]["item_id"] == "gpu"
 
 
 def test_active_learning_report_command_writes_csv(
