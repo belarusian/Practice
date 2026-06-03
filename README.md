@@ -2,6 +2,21 @@
 
 This repository is a low-cost training bed for practicing the work behind production ML systems, not just model demos. It is designed to build hands-on experience with PyTorch training, experiment management, active learning, embedding retrieval, model serving, and AWS deployment without immediately committing to a large managed-services bill.
 
+## Marcus Aurelius Philosopher Model
+
+**Note**: Marcus Aurelius training is also available in the [Training repo](https://github.com/belarusian/training) (`training/marcus/`).
+
+| Repo | Model | Approach | Use Case |
+|------|-------|----------|----------|
+| **Practice** | Qwen3-100M | Full fine-tuning with PyTorch | Experimentation, learning, tiny LLM |
+| **Training** | Qwen3-4B | SFT + GRPO with Unsloth LoRA | Production ML pipeline, advanced RLHF |
+
+**Why both?**
+- **Practice repo**: Marcus Aurelius as a learning experiment (separate use case)
+- **Training repo**: Effect TypeScript fine-tuning (primary focus)
+
+See `src/industry_ml_lab/training/philosopher.py` for the Practice implementation.
+
 ## What This Covers
 
 The lab is structured around production-oriented ML capabilities:
@@ -104,6 +119,9 @@ Wrap training and promotion steps in a Temporal workflow.
 7. Deployment
 Push model and API artifacts to AWS with a cost-aware topology.
 
+8. Marcus Aurelius Philosopher (tiny LLM)
+Fine-tune Qwen3-100M on Meditations Q&A pairs using standard PyTorch. Focus: learning full fine-tuning vs LoRA approaches.
+
 ## Recommended Learning Path
 
 - Phase 1: Get the local CLI and demo data working
@@ -115,6 +133,7 @@ Push model and API artifacts to AWS with a cost-aware topology.
 - Phase 5: Replace the local retrieval index with Postgres plus `pgvector`
 - Phase 6: Containerize and deploy to AWS EC2 and S3
 - Phase 7: Add a control plane in TypeScript or NestJS for full-stack model operations practice
+- Phase 8: Marcus Aurelius philosopher model - practice full fine-tuning vs LoRA approaches
 
 ## Key Documents
 
