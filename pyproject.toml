@@ -39,6 +39,13 @@ training = [
   "torchaudio>=2.7.0",
   "torchvision>=0.22.0",
 ]
+from-scratch = [
+  "numpy>=2.2.3",
+  "torch>=2.7.0",
+]
+from-scratch-np = [
+  "numpy>=2.2.3",
+]
 transformer = [
   "datasets>=3.6.0",
   "torch>=2.7.0",
