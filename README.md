@@ -133,7 +133,6 @@ Fine-tune Qwen3-100M on Meditations Q&A pairs using standard PyTorch. Focus: lea
 - Phase 5: Replace the local retrieval index with Postgres plus `pgvector`
 - Phase 6: Containerize and deploy to AWS EC2 and S3
 - Phase 7: Add a control plane in TypeScript or NestJS for full-stack model operations practice
-- Phase 8: Marcus Aurelius philosopher model - practice full fine-tuning vs LoRA approaches
 
 ## Key Documents
 
