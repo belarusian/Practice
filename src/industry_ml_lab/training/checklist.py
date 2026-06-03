@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 SUPPORTED_DEVICES = ("cpu", "cuda", "mps")
-SUPPORTED_TARGETS = ("vision", "audio", "text")
+SUPPORTED_TARGETS = ("vision", "audio", "text", "philosopher")
 DEFAULT_TARGET = "vision"
 DEFAULT_REQUIRED_CUDA_VRAM_GB = 4.0
 DEFAULT_REQUIRED_DISK_GB = 5.0
@@ -125,6 +125,13 @@ def check_target_dependencies(target: str) -> list[CheckResult]:
     elif target == "audio":
         dependencies.append(("torchaudio", "torchaudio"))
     elif target == "text":
+        dependencies.extend(
+            [
+                ("transformers", "Transformers"),
+                ("datasets", "Hugging Face Datasets"),
+            ]
+        )
+    elif target == "philosopher":
         dependencies.extend(
             [
                 ("transformers", "Transformers"),
